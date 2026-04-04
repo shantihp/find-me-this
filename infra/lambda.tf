@@ -32,6 +32,15 @@ resource "null_resource" "lambda_build" {
       pip3 install \
         --quiet \
         --requirement "${local.backend_dir}/requirements.txt" \
+        --target "${local.build_dir}" && \
+      pip3 install \
+        --quiet \
+        --platform linux_x86_64 \
+        --implementation cp \
+        --python-version 3.12 \
+        --only-binary=:all: \
+        --upgrade \
+        pydantic pydantic-core \
         --target "${local.build_dir}"
       cp -r "${local.backend_dir}/app" "${local.build_dir}/app"
       cp "${local.backend_dir}/handler.py" "${local.build_dir}/handler.py"
