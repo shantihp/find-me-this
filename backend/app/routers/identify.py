@@ -17,4 +17,7 @@ async def identify(req: IdentifyRequest):
     except ValueError as e:
         raise HTTPException(422, str(e))
     except Exception as e:
-        raise HTTPException(500, f"Vision service error: {str(e)}")
+        msg = str(e)
+        if "429" in msg or "rate limit" in msg.lower():
+            raise HTTPException(429, "Vision service is busy — please try again in a moment.")
+        raise HTTPException(500, f"Vision service error: {msg}")

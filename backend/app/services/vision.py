@@ -1,5 +1,6 @@
 import os
 import json
+import asyncio
 import httpx
 
 _API_KEY = os.getenv("GEMINI_API_KEY")
@@ -24,9 +25,25 @@ async def identify_product(image_b64: str) -> dict:
         }],
         "generationConfig": {"temperature": 0, "maxOutputTokens": 250},
     }
-    async with httpx.AsyncClient(timeout=25) as client:
-        resp = await client.post(_URL, params={"key": _API_KEY}, json=payload)
-        resp.raise_for_status()
+
+    last_err = None
+    for attempt in range(3):
+        if attempt > 0:
+            await asyncio.sleep(2 ** attempt)  # 2s, 4s
+        try:
+            async with httpx.AsyncClient(timeout=25) as client:
+                resp = await client.post(_URL, params={"key": _API_KEY}, json=payload)
+                if resp.status_code == 429:
+                    last_err = Exception("Gemini rate limit hit — please try again in a moment.")
+                    continue
+                resp.raise_for_status()
+                break
+        except httpx.HTTPStatusError as e:
+            last_err = e
+            if e.response.status_code != 429:
+                raise
+    else:
+        raise last_err
 
     text = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
     if text.startswith("```"):
