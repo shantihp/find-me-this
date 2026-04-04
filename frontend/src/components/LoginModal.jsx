@@ -1,9 +1,9 @@
 import { useRef, useEffect, useState } from 'react'
-import { signIn, signUp, confirmSignUp, resendSignUpCode } from 'aws-amplify/auth'
+import { signIn, signUp, confirmSignUp, resendSignUpCode, resetPassword, confirmResetPassword } from 'aws-amplify/auth'
 import { fetchAuthSession } from 'aws-amplify/auth'
 import { useAuth } from '../hooks/useAuth'
 
-const VIEWS = { SIGN_IN: 'sign_in', SIGN_UP: 'sign_up', CONFIRM: 'confirm' }
+const VIEWS = { SIGN_IN: 'sign_in', SIGN_UP: 'sign_up', CONFIRM: 'confirm', FORGOT: 'forgot', RESET: 'reset' }
 
 export default function LoginModal({ onClose, reason }) {
   const { setUser } = useAuth()
@@ -12,6 +12,7 @@ export default function LoginModal({ onClose, reason }) {
   const [email, setEmail] = useState('')
   const [firstName, setFirstName] = useState('')
   const [password, setPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -65,7 +66,6 @@ export default function LoginModal({ onClose, reason }) {
     setLoading(true); setError('')
     try {
       await confirmSignUp({ username: email, confirmationCode: code.trim() })
-      // Auto sign in after confirmation
       await signIn({ username: email, password })
       const session = await fetchAuthSession()
       const token = session.tokens?.idToken?.toString()
@@ -89,6 +89,51 @@ export default function LoginModal({ onClose, reason }) {
     }
   }
 
+  async function handleForgot(e) {
+    e.preventDefault()
+    setLoading(true); setError('')
+    try {
+      await resetPassword({ username: email })
+      setCode(''); setNewPassword('')
+      setView(VIEWS.RESET)
+    } catch (err) {
+      setError(friendlyError(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleReset(e) {
+    e.preventDefault()
+    setLoading(true); setError('')
+    try {
+      await confirmResetPassword({ username: email, confirmationCode: code.trim(), newPassword })
+      // Auto sign in with new password
+      await signIn({ username: email, password: newPassword })
+      const session = await fetchAuthSession()
+      const token = session.tokens?.idToken?.toString()
+      if (token) localStorage.setItem('auth_token', token)
+      const payload = session.tokens?.idToken?.payload
+      setUser({ id: payload?.sub, email: payload?.email, name: payload?.given_name || null })
+      onClose()
+    } catch (err) {
+      setError(friendlyError(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const HEADERS = {
+    [VIEWS.SIGN_IN]:  { title: reason === 'limit' ? "You've used all free searches" : 'Sign in to FindMeThis',
+                        sub: reason === 'limit' ? "Sign in for unlimited searches and bookmarks — it's free." : 'Save products, bookmark searches, and get unlimited results.' },
+    [VIEWS.SIGN_UP]:  { title: 'Create your account', sub: 'Save products, bookmark searches, and get unlimited results.' },
+    [VIEWS.CONFIRM]:  { title: 'Check your email', sub: `We sent a 6-digit code to ${email}` },
+    [VIEWS.FORGOT]:   { title: 'Reset your password', sub: "Enter your email and we'll send you a reset code." },
+    [VIEWS.RESET]:    { title: 'Set a new password', sub: `Enter the code we sent to ${email} and choose a new password.` },
+  }
+
+  const { title, sub } = HEADERS[view]
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
@@ -100,27 +145,13 @@ export default function LoginModal({ onClose, reason }) {
         {/* Header */}
         <div className="text-center mb-6">
           <div className="text-4xl mb-3">🔍</div>
-          <h2 className="text-xl font-bold text-gray-900">
-            {view === VIEWS.CONFIRM
-              ? 'Check your email'
-              : reason === 'limit'
-              ? "You've used all free searches"
-              : view === VIEWS.SIGN_UP
-              ? 'Create your account'
-              : 'Sign in to FindMeThis'}
-          </h2>
-          <p className="text-sm text-gray-500 mt-1">
-            {view === VIEWS.CONFIRM
-              ? `We sent a 6-digit code to ${email}`
-              : reason === 'limit'
-              ? 'Sign in for unlimited searches and bookmarks — it\'s free.'
-              : 'Save products, bookmark searches, and get unlimited results.'}
-          </p>
+          <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+          <p className="text-sm text-gray-500 mt-1">{sub}</p>
         </div>
 
-        {/* Error */}
+        {/* Error / info */}
         {error && (
-          <div className="mb-4 px-3 py-2 rounded-lg bg-red-50 text-red-600 text-sm">
+          <div className={`mb-4 px-3 py-2 rounded-lg text-sm ${error.includes('resent') || error.includes('sent') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
             {error}
           </div>
         )}
@@ -138,6 +169,11 @@ export default function LoginModal({ onClose, reason }) {
               value={password} onChange={e => { setPassword(e.target.value); clearError() }}
               className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
             />
+            <div className="text-right -mt-1">
+              <button type="button" onClick={() => { setView(VIEWS.FORGOT); clearError() }} className="text-xs text-pink-600 hover:underline">
+                Forgot password?
+              </button>
+            </div>
             <button
               type="submit" disabled={loading}
               className="w-full bg-pink-600 hover:bg-pink-700 disabled:opacity-60 text-white rounded-xl py-2.5 text-sm font-semibold transition"
@@ -186,7 +222,7 @@ export default function LoginModal({ onClose, reason }) {
           </form>
         )}
 
-        {/* Confirm */}
+        {/* Confirm email */}
         {view === VIEWS.CONFIRM && (
           <form onSubmit={handleConfirm} className="space-y-3">
             <input
@@ -204,6 +240,57 @@ export default function LoginModal({ onClose, reason }) {
             <p className="text-center text-xs text-gray-400">
               Didn't get it?{' '}
               <button type="button" onClick={handleResend} className="text-pink-600 hover:underline font-medium">
+                Resend code
+              </button>
+            </p>
+          </form>
+        )}
+
+        {/* Forgot password — enter email */}
+        {view === VIEWS.FORGOT && (
+          <form onSubmit={handleForgot} className="space-y-3">
+            <input
+              type="email" placeholder="Email address" required autoFocus
+              value={email} onChange={e => { setEmail(e.target.value); clearError() }}
+              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
+            />
+            <button
+              type="submit" disabled={loading}
+              className="w-full bg-pink-600 hover:bg-pink-700 disabled:opacity-60 text-white rounded-xl py-2.5 text-sm font-semibold transition"
+            >
+              {loading ? 'Sending…' : 'Send reset code'}
+            </button>
+            <p className="text-center text-xs text-gray-400">
+              <button type="button" onClick={() => { setView(VIEWS.SIGN_IN); clearError() }} className="text-pink-600 hover:underline font-medium">
+                Back to sign in
+              </button>
+            </p>
+          </form>
+        )}
+
+        {/* Reset password — enter code + new password */}
+        {view === VIEWS.RESET && (
+          <form onSubmit={handleReset} className="space-y-3">
+            <input
+              type="text" placeholder="6-digit code" required autoFocus
+              maxLength={6} inputMode="numeric"
+              value={code} onChange={e => { setCode(e.target.value); clearError() }}
+              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-center tracking-widest text-lg focus:outline-none focus:ring-2 focus:ring-pink-400"
+            />
+            <input
+              type="password" placeholder="New password (min 8 chars)" required minLength={8}
+              value={newPassword} onChange={e => { setNewPassword(e.target.value); clearError() }}
+              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
+            />
+            <button
+              type="submit" disabled={loading}
+              className="w-full bg-pink-600 hover:bg-pink-700 disabled:opacity-60 text-white rounded-xl py-2.5 text-sm font-semibold transition"
+            >
+              {loading ? 'Resetting…' : 'Reset & sign in'}
+            </button>
+            <p className="text-center text-xs text-gray-400">
+              Didn't get it?{' '}
+              <button type="button" onClick={() => { setView(VIEWS.FORGOT); clearError() }} className="text-pink-600 hover:underline font-medium">
                 Resend code
               </button>
             </p>
