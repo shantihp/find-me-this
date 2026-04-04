@@ -13,6 +13,15 @@ resource "aws_ssm_parameter" "gemini_api_key" {
 # Cognito values are written here after Cognito resources are created,
 # so Lambda and any other consumers can read them from a consistent location.
 
+resource "aws_ssm_parameter" "serpapi_key" {
+  name        = "/findmethis/serpapi_key"
+  description = "SerpAPI key for Google Shopping search"
+  type        = "SecureString"
+  value       = var.serpapi_key
+
+  tags = local.tags
+}
+
 resource "aws_ssm_parameter" "cognito_user_pool_id" {
   name        = "/findmethis/cognito_user_pool_id"
   description = "Cognito User Pool ID"

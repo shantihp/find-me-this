@@ -97,6 +97,7 @@ resource "aws_lambda_function" "api" {
       RATE_LIMIT_TABLE      = aws_dynamodb_table.rate_limits.name
       USER_DATA_TABLE       = aws_dynamodb_table.user_data.name
       GEMINI_API_KEY        = var.gemini_api_key
+      SERPAPI_KEY           = var.serpapi_key
       COGNITO_USER_POOL_ID  = aws_cognito_user_pool.main.id
       COGNITO_CLIENT_ID     = aws_cognito_user_pool_client.spa.id
     }
