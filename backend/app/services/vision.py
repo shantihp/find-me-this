@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import asyncio
 import httpx
@@ -23,7 +24,7 @@ async def identify_product(image_b64: str) -> dict:
                 {"text": PROMPT},
             ]
         }],
-        "generationConfig": {"temperature": 0, "maxOutputTokens": 250},
+        "generationConfig": {"temperature": 0, "maxOutputTokens": 1024},
     }
 
     last_err = None
@@ -46,8 +47,17 @@ async def identify_product(image_b64: str) -> dict:
         raise last_err
 
     text = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
-    if text.startswith("```"):
-        text = text.split("```")[1]
-        if text.startswith("json"):
-            text = text[4:]
-    return json.loads(text)
+
+    # Strip markdown code fences (``` or ```json ... ```)
+    text = re.sub(r"^```(?:json)?\s*", "", text, flags=re.IGNORECASE).strip()
+    text = re.sub(r"```\s*$", "", text).strip()
+
+    # Try direct parse first
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        # Fall back to extracting the first {...} block from the response
+        match = re.search(r"\{.*\}", text, re.DOTALL)
+        if match:
+            return json.loads(match.group())
+        raise ValueError(f"Could not parse model response as JSON: {text[:200]}")
