@@ -1,6 +1,7 @@
 aws_region     = "ap-south-1"
 app_name       = "FindMeThis"
 gemini_api_key = "AIza..."
+serpapi_key    = "..."
 github_repo    = "shantihp/find-me-this"
 github_token   = "ghp_..."
 amplify_branch = "develop"

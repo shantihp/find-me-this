@@ -16,6 +16,12 @@ variable "gemini_api_key" {
   sensitive   = true
 }
 
+variable "serpapi_key" {
+  description = "SerpAPI key for Google Shopping search (replaces blocked scrapers)"
+  type        = string
+  sensitive   = true
+}
+
 variable "github_repo" {
   description = "GitHub repository for Amplify (format: username/repo)"
   type        = string
