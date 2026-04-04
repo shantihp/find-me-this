@@ -1,5 +1,8 @@
 import asyncio
+import logging
 from app.models.product import Product
+
+logger = logging.getLogger(__name__)
 from app.scrapers.myntra   import MyntraScraper
 from app.scrapers.nykaa    import NykaaScraper
 from app.scrapers.amazon   import AmazonScraper
@@ -22,9 +25,14 @@ async def run_search(query: str, category: str) -> list[Product]:
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
     all_products: list[Product] = []
-    for r in results:
-        if isinstance(r, list):
+    for scraper, r in zip(scrapers, results):
+        if isinstance(r, Exception):
+            print(f"SCRAPER [{scraper.platform}] exception: {r}")
+        elif isinstance(r, list):
+            print(f"SCRAPER [{scraper.platform}] returned {len(r)} results")
             all_products.extend(r)
+        else:
+            print(f"SCRAPER [{scraper.platform}] unexpected result: {type(r)}")
 
     # Sort by price ascending, filter out zero-price items
     all_products = [p for p in all_products if p.price > 0]
