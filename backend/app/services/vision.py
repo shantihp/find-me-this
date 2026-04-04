@@ -3,7 +3,7 @@ import json
 import httpx
 
 _API_KEY = os.getenv("GEMINI_API_KEY")
-_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
 PROMPT = """You are a product identification assistant for an Indian fashion and beauty shopping app.
 Analyze the image and return ONLY a JSON object with these fields:
