@@ -29,7 +29,7 @@ resource "null_resource" "lambda_build" {
       set -e
       rm -rf "${local.build_dir}"
       mkdir -p "${local.build_dir}"
-      pip install \
+      pip3 install \
         --quiet \
         --requirement "${local.backend_dir}/requirements.txt" \
         --target "${local.build_dir}"
