@@ -11,6 +11,7 @@ export default function App() {
   const { user, setUser, loading, logout } = useAuthInit()
   const [showLogin, setShowLogin] = useState(false)
   const [loginReason, setLoginReason] = useState(null)
+  const [homeKey, setHomeKey] = useState(0)
 
   function openLogin(reason) {
     setLoginReason(reason ?? null)
@@ -22,10 +23,10 @@ export default function App() {
   return (
     <AuthContext.Provider value={{ user, setUser, openLogin, logout }}>
       <div className="min-h-screen flex flex-col">
-        <Navbar onLoginClick={() => openLogin()} />
+        <Navbar onLoginClick={() => openLogin()} onLogoClick={() => setHomeKey(k => k + 1)} />
         <main className="flex-1">
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<Home key={homeKey} />} />
             <Route path="/profile" element={<Profile />} />
           </Routes>
         </main>

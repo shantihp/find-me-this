@@ -2,13 +2,13 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import SearchCounter from './SearchCounter'
 
-export default function Navbar({ onLoginClick }) {
+export default function Navbar({ onLoginClick, onLogoClick }) {
   const { user } = useAuth()
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 font-bold text-lg text-primary-700">
+        <Link to="/" onClick={onLogoClick} className="flex items-center gap-2 font-bold text-lg text-primary-700">
           <span className="text-2xl">🔍</span>
           <span>FindMeThis</span>
         </Link>
