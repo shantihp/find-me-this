@@ -19,6 +19,19 @@ export default function ProductCard({ product, onBookmark }) {
   const { user, openLogin } = useAuth()
   const [bookmarked, setBookmarked] = useState(product.bookmarked || false)
   const [saving, setSaving] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  async function handleShare() {
+    const url = product.product_url
+    const text = `${product.product_name} — ${formatPrice(product.price)} on ${platform.label}`
+    if (navigator.share) {
+      try { await navigator.share({ title: product.product_name, text, url }) } catch { /* user cancelled */ }
+    } else {
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
 
   const platform = PLATFORM_STYLES[product.platform?.toLowerCase()] || { bg: 'bg-gray-600', label: product.platform }
 
@@ -59,15 +72,25 @@ export default function ProductCard({ product, onBookmark }) {
           {platform.label}
         </span>
 
-        {/* Bookmark button */}
-        <button
-          onClick={handleBookmark}
-          disabled={saving}
-          className={`absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center shadow transition
-            ${bookmarked ? 'bg-red-500 text-white' : 'bg-white/80 hover:bg-white text-gray-600'}`}
-        >
-          {bookmarked ? '♥' : '♡'}
-        </button>
+        {/* Action buttons */}
+        <div className="absolute top-2 right-2 flex flex-col gap-1.5">
+          <button
+            onClick={handleBookmark}
+            disabled={saving}
+            className={`w-7 h-7 rounded-full flex items-center justify-center shadow transition
+              ${bookmarked ? 'bg-red-500 text-white' : 'bg-white/80 hover:bg-white text-gray-600'}`}
+          >
+            {bookmarked ? '♥' : '♡'}
+          </button>
+          <button
+            onClick={handleShare}
+            title={copied ? 'Link copied!' : 'Share'}
+            className={`w-7 h-7 rounded-full flex items-center justify-center shadow transition text-xs
+              ${copied ? 'bg-green-500 text-white' : 'bg-white/80 hover:bg-white text-gray-600'}`}
+          >
+            {copied ? '✓' : '↗'}
+          </button>
+        </div>
 
         {/* Discount badge */}
         {product.discount_percent > 0 && (
