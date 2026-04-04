@@ -1,0 +1,9 @@
+aws_region     = "ap-south-1"
+app_name       = "FindMeThis"
+openai_api_key = "sk-..."
+github_repo    = "shantihp/find-me-this"
+github_token   = "ghp_..."
+amplify_branch = "develop"
+
+# Tighten this to your Amplify domain before going to production
+# cors_allow_origins = ["https://develop.dXXXXXXXXXXX.amplifyapp.com"]
