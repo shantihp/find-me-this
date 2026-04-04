@@ -1,6 +1,6 @@
 output "api_url" {
   description = "API Gateway invoke URL — set this as VITE_API_URL in frontend"
-  value       = "https://${aws_apigatewayv2_api.main.id}.execute-api.${var.aws_region}.amazonaws.com/prod"
+  value       = "https://${aws_apigatewayv2_api.main.id}.execute-api.${var.aws_region}.amazonaws.com"
 }
 
 output "amplify_url" {
