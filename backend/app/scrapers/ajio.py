@@ -6,13 +6,16 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
     "Accept": "application/json",
     "Referer": "https://www.ajio.com/",
+    "x-requested-with": "XMLHttpRequest",
 }
 
 class AjioScraper(BaseScraper):
     platform = "ajio"
 
     async def search(self, query: str, category: str) -> list[Product]:
-        # Ajio exposes a search JSON endpoint used by their SPA
+        # Ajio blocks cloud IPs at the CDN level (Cloudflare).
+        # Try the API; if blocked return a single placeholder card so users
+        # can still click through to search Ajio themselves.
         url = "https://www.ajio.com/api/search"
         params = {
             "fields": "SITE",
@@ -25,6 +28,8 @@ class AjioScraper(BaseScraper):
         try:
             async with httpx.AsyncClient(timeout=10, follow_redirects=True) as client:
                 resp = await client.get(url, params=params, headers=HEADERS)
+                if resp.status_code in (403, 429, 503):
+                    raise ValueError("blocked")
                 resp.raise_for_status()
                 data = resp.json()
         except Exception:

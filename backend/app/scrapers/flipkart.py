@@ -1,5 +1,4 @@
 import httpx
-import json
 from bs4 import BeautifulSoup
 from app.scrapers.base import BaseScraper
 from app.models.product import Product
@@ -19,26 +18,23 @@ class FlipkartScraper(BaseScraper):
         try:
             async with httpx.AsyncClient(timeout=12, follow_redirects=True, headers=HEADERS) as client:
                 resp = await client.get(url, params=params)
-                resp.raise_for_status()
                 soup = BeautifulSoup(resp.text, "html.parser")
-        except Exception:
+                cards = soup.select("div[data-id]")
+                print(f"FLIPKART status={resp.status_code} cards={len(cards)}")
+                resp.raise_for_status()
+        except Exception as e:
+            print(f"FLIPKART fetch error: {e}")
             return []
 
         products = []
-        # Flipkart uses different CSS classes based on layout — try multiple selectors
-        cards = (
-            soup.select("div._1AtVbE div._13oc-S") or
-            soup.select("div._2kHMtA") or
-            soup.select("div[data-id]")
-        )[:10]
-
-        for card in cards:
+        for card in soup.select("div[data-id]")[:10]:
             try:
-                name_el   = card.select_one("div._4rR01T, a.s1Q9rs, div.IRpwTa")
-                price_el  = card.select_one("div._30jeq3, div._1_WHN1")
-                mrp_el    = card.select_one("div._3I9_wc")
-                img_el    = card.select_one("img._396cs4, img._2r_T1I")
-                link_el   = card.select_one("a._1fQZEK, a.s1Q9rs, a._2rpwqI")
+                # Current class names (as of 2026)
+                name_el  = card.select_one("a.atJtCj, a.s1Q9rs, div.KzDlHZ")
+                price_el = card.select_one("div.hZ3P6w, div._30jeq3")
+                mrp_el   = card.select_one("div.kRYCnD, div._3I9_wc")
+                img_el   = card.select_one("img[src]")
+                link_el  = card.select_one("a[href]")
 
                 if not name_el or not price_el:
                     continue

@@ -1,5 +1,4 @@
 import httpx
-import json
 from app.scrapers.base import BaseScraper
 from app.models.product import Product
 
@@ -14,6 +13,8 @@ class MeeshoScraper(BaseScraper):
     platform = "meesho"
 
     async def search(self, query: str, category: str) -> list[Product]:
+        # Meesho blocks cloud IPs with anti-bot protection.
+        # Try the GraphQL search endpoint used by their SPA.
         url = "https://www.meesho.com/api/v1/products/search"
         payload = {
             "query": query,
@@ -24,6 +25,8 @@ class MeeshoScraper(BaseScraper):
         try:
             async with httpx.AsyncClient(timeout=10, follow_redirects=True) as client:
                 resp = await client.post(url, json=payload, headers=HEADERS)
+                if resp.status_code in (403, 429, 503):
+                    raise ValueError("blocked")
                 resp.raise_for_status()
                 data = resp.json()
         except Exception:
