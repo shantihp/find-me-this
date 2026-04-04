@@ -1,10 +1,9 @@
 import os
 import json
-import base64
-import google.generativeai as genai
+import httpx
 
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-_model = genai.GenerativeModel("gemini-1.5-flash")
+_API_KEY = os.getenv("GEMINI_API_KEY")
+_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
 
 PROMPT = """You are a product identification assistant for an Indian fashion and beauty shopping app.
 Analyze the image and return ONLY a JSON object with these fields:
@@ -16,12 +15,20 @@ Analyze the image and return ONLY a JSON object with these fields:
 Return only valid JSON, no markdown, no extra text."""
 
 async def identify_product(image_b64: str) -> dict:
-    image_bytes = base64.b64decode(image_b64)
-    response = await _model.generate_content_async([
-        {"mime_type": "image/jpeg", "data": image_bytes},
-        PROMPT,
-    ])
-    text = response.text.strip()
+    payload = {
+        "contents": [{
+            "parts": [
+                {"inline_data": {"mime_type": "image/jpeg", "data": image_b64}},
+                {"text": PROMPT},
+            ]
+        }],
+        "generationConfig": {"temperature": 0, "maxOutputTokens": 250},
+    }
+    async with httpx.AsyncClient(timeout=25) as client:
+        resp = await client.post(_URL, params={"key": _API_KEY}, json=payload)
+        resp.raise_for_status()
+
+    text = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
     if text.startswith("```"):
         text = text.split("```")[1]
         if text.startswith("json"):
