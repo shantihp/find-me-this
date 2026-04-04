@@ -14,12 +14,10 @@ export function useSearch() {
     setError(null)
 
     try {
-      // Step 1: identify the item
       const { data: item } = await api.post('/identify', { image: imageBase64 })
       setIdentified(item)
       setStatus('searching')
 
-      // Step 2: search all platforms
       const { data: products } = await api.post('/search', {
         search_query: item.search_query,
         category: item.category,
@@ -27,7 +25,6 @@ export function useSearch() {
       setResults(products)
       setStatus('done')
 
-      // Record history (fire-and-forget, silent if unauthenticated)
       api.post('/history', {
         detected_query: item.search_query,
         category: item.category,
@@ -46,6 +43,36 @@ export function useSearch() {
     }
   }
 
+  async function runText(prompt) {
+    setStatus('searching')
+    setIdentified(null)
+    setResults([])
+    setError(null)
+
+    try {
+      const { data } = await api.post('/search/text', { prompt })
+      setIdentified({ search_query: data.search_query, category: data.category })
+      setResults(data.products)
+      setStatus('done')
+
+      api.post('/history', {
+        detected_query: data.search_query,
+        category: data.category,
+        result_count: data.products.length,
+      }).catch(() => {})
+
+      return { item: data, products: data.products }
+    } catch (err) {
+      if (err.response?.status === 429) {
+        setStatus('idle')
+        return { limitReached: true }
+      }
+      setError(err.response?.data?.detail || 'Something went wrong. Please try again.')
+      setStatus('error')
+      return { error: true }
+    }
+  }
+
   function reset() {
     setStatus('idle')
     setIdentified(null)
@@ -53,5 +80,5 @@ export function useSearch() {
     setError(null)
   }
 
-  return { run, reset, status, identified, results, error }
+  return { run, runText, reset, status, identified, results, error }
 }

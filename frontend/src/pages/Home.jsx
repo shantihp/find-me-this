@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import UploadZone from '../components/UploadZone'
 import ResultsGrid from '../components/ResultsGrid'
 import LoginModal from '../components/LoginModal'
@@ -13,12 +13,15 @@ const STATUS_MSG = {
 }
 
 export default function Home() {
-  const { run, reset, status, identified, results, error } = useSearch()
+  const { run, runText, reset, status, identified, results, error } = useSearch()
   const { canSearch, increment, remaining } = useRateLimit()
-  const { user, openLogin } = useAuth()
+  const { user } = useAuth()
   const [showLogin, setShowLogin] = useState(false)
   const [imagePreview, setImagePreview] = useState(null)
   const [savedSearch, setSavedSearch] = useState(false)
+  const [mode, setMode] = useState('image') // 'image' | 'text'
+  const [prompt, setPrompt] = useState('')
+  const textareaRef = useRef()
 
   async function saveSearch() {
     if (!user) { setShowLogin(true); return }
@@ -32,10 +35,7 @@ export default function Home() {
   }
 
   async function handleImage(base64, previewUrl) {
-    if (!user && !canSearch) {
-      setShowLogin(true)
-      return
-    }
+    if (!user && !canSearch) { setShowLogin(true); return }
     setImagePreview(previewUrl)
     setSavedSearch(false)
     if (!user) increment()
@@ -43,18 +43,42 @@ export default function Home() {
     if (result?.limitReached) setShowLogin(true)
   }
 
+  async function handleTextSearch(e) {
+    e.preventDefault()
+    if (!prompt.trim()) return
+    if (!user && !canSearch) { setShowLogin(true); return }
+    setImagePreview(null)
+    setSavedSearch(false)
+    if (!user) increment()
+    const result = await runText(prompt.trim())
+    if (result?.limitReached) setShowLogin(true)
+  }
+
+  function handleReset() {
+    reset()
+    setPrompt('')
+  }
+
+  function switchMode(m) {
+    setMode(m)
+    reset()
+    setPrompt('')
+    setImagePreview(null)
+  }
+
   const isLoading = status === 'identifying' || status === 'searching'
+  const showInput = status === 'idle' || isLoading
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       {/* Hero */}
       {status === 'idle' && (
-        <div className="text-center mb-10">
+        <div className="text-center mb-8">
           <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-3 tracking-tight">
             Find <span className="text-primary-600">any item</span> across India's top shops
           </h1>
           <p className="text-gray-500 text-lg max-w-xl mx-auto">
-            Upload a photo of a dress, kurta, lipstick — anything. We'll find it for you on Myntra, Amazon, Flipkart, Ajio, Nykaa, and Meesho.
+            Upload a photo or describe what you're looking for — we'll find it on Myntra, Amazon, Flipkart, Ajio, Nykaa, and Meesho.
           </p>
           {!user && remaining <= 3 && remaining > 0 && (
             <p className="text-amber-600 text-sm mt-4 font-medium">
@@ -65,9 +89,55 @@ export default function Home() {
         </div>
       )}
 
-      {/* Upload zone */}
-      {(status === 'idle' || isLoading) && (
+      {/* Mode toggle */}
+      {showInput && (
+        <div className="flex justify-center mb-6">
+          <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
+            <button
+              onClick={() => switchMode('image')}
+              className={`px-5 py-2 rounded-lg text-sm font-medium transition ${mode === 'image' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              📷 Search by image
+            </button>
+            <button
+              onClick={() => switchMode('text')}
+              className={`px-5 py-2 rounded-lg text-sm font-medium transition ${mode === 'text' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              ✏️ Describe what you want
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Image upload */}
+      {mode === 'image' && showInput && (
         <UploadZone onImage={handleImage} disabled={isLoading || (!user && !canSearch)} />
+      )}
+
+      {/* Text search */}
+      {mode === 'text' && showInput && (
+        <form onSubmit={handleTextSearch} className="max-w-2xl mx-auto">
+          <div className="relative">
+            <textarea
+              ref={textareaRef}
+              rows={3}
+              placeholder={'Describe what you\'re looking for…\ne.g. "pink short dress for a tall slim girl" or "matte red lipstick long lasting"'}
+              value={prompt}
+              onChange={e => setPrompt(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTextSearch(e) } }}
+              disabled={isLoading}
+              className="w-full border border-gray-300 rounded-2xl px-5 py-4 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-400 disabled:opacity-50 pr-24"
+            />
+            <button
+              type="submit"
+              disabled={isLoading || !prompt.trim()}
+              className="absolute bottom-3 right-3 bg-primary-600 hover:bg-primary-700 disabled:opacity-40 text-white text-sm font-semibold rounded-xl px-4 py-2 transition"
+            >
+              Search
+            </button>
+          </div>
+          <p className="text-xs text-gray-400 mt-2 text-center">Be as descriptive as you like — style, color, occasion, fit, budget</p>
+        </form>
       )}
 
       {/* Loading state */}
@@ -79,7 +149,7 @@ export default function Home() {
               <p className="font-semibold text-gray-800">{STATUS_MSG[status].text}</p>
               {identified && (
                 <p className="text-sm text-gray-500 mt-0.5">
-                  Found: <span className="text-primary-600 font-medium">{identified.sub_type}</span>
+                  Found: <span className="text-primary-600 font-medium">{identified.sub_type || identified.search_query}</span>
                   {identified.attributes && ` · ${identified.attributes}`}
                 </p>
               )}
@@ -92,7 +162,7 @@ export default function Home() {
       {status === 'error' && (
         <div className="text-center mt-8">
           <p className="text-red-500 font-medium">{error}</p>
-          <button onClick={reset} className="mt-3 text-sm text-primary-600 hover:underline">Try again</button>
+          <button onClick={handleReset} className="mt-3 text-sm text-primary-600 hover:underline">Try again</button>
         </div>
       )}
 
@@ -116,7 +186,7 @@ export default function Home() {
               >
                 {savedSearch ? '★ Saved' : '☆ Save search'}
               </button>
-              <button onClick={reset} className="text-sm text-primary-600 hover:underline">New search</button>
+              <button onClick={handleReset} className="text-sm text-primary-600 hover:underline">New search</button>
             </div>
           </div>
 
@@ -139,8 +209,8 @@ export default function Home() {
         <div className="text-center mt-12 text-gray-500">
           <p className="text-4xl mb-3">😕</p>
           <p className="font-medium text-gray-700">No results found</p>
-          <p className="text-sm mt-1">Try a clearer photo or a different angle</p>
-          <button onClick={reset} className="mt-4 text-sm text-primary-600 hover:underline">Try again</button>
+          <p className="text-sm mt-1">Try rephrasing your description or uploading an image instead</p>
+          <button onClick={handleReset} className="mt-4 text-sm text-primary-600 hover:underline">Try again</button>
         </div>
       )}
 
