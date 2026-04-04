@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import api from '../api/client'
 
-const TABS = ['Bookmarks', 'Favourites', 'History']
+const TABS = ['Bookmarks', 'Saved Searches', 'History']
 
 function formatPrice(n) {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n)
 }
 
 export default function Profile() {
-  const { user, setUser } = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [tab, setTab] = useState('Bookmarks')
   const [data, setData] = useState({ bookmarks: [], favourites: [], history: [] })
@@ -39,12 +39,14 @@ export default function Profile() {
     }
   }
 
-  function logout() {
-    setUser(null)
-    localStorage.removeItem('auth_user')
-    localStorage.removeItem('auth_token')
+  async function handleLogout() {
+    await logout()
     navigate('/')
   }
+
+  // Derive display name from email (part before @)
+  const displayName = user?.email ? user.email.split('@')[0] : 'User'
+  const avatarLetter = displayName[0].toUpperCase()
 
   if (!user) return null
 
@@ -54,15 +56,15 @@ export default function Profile() {
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-full bg-primary-600 text-white flex items-center justify-center text-2xl font-bold shadow">
-            {user.name?.[0]?.toUpperCase() || 'U'}
+            {avatarLetter}
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">{user.name}</h1>
+            <h1 className="text-xl font-bold text-gray-900">{displayName}</h1>
             <p className="text-sm text-gray-500">{user.email}</p>
           </div>
         </div>
         <button
-          onClick={logout}
+          onClick={handleLogout}
           className="text-sm text-red-500 hover:text-red-600 border border-red-200 hover:border-red-300 rounded-full px-4 py-1.5 transition"
         >
           Sign out
@@ -73,7 +75,7 @@ export default function Profile() {
       <div className="grid grid-cols-3 gap-4 mb-8">
         {[
           { label: 'Bookmarks', value: data.bookmarks.length, emoji: '🔖' },
-          { label: 'Favourites', value: data.favourites.length, emoji: '⭐' },
+          { label: 'Saved Searches', value: data.favourites.length, emoji: '⭐' },
           { label: 'Searches', value: data.history.length, emoji: '🔍' },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-xl border border-gray-200 p-4 text-center">
@@ -124,10 +126,10 @@ export default function Profile() {
             )
           )}
 
-          {/* Favourites */}
-          {tab === 'Favourites' && (
+          {/* Saved Searches */}
+          {tab === 'Saved Searches' && (
             data.favourites.length === 0 ? (
-              <Empty emoji="⭐" text="No favourites yet" sub="Save a search by clicking ⭐ on the results page" />
+              <Empty emoji="⭐" text="No saved searches yet" sub='After a search, click "☆ Save search" to save it here' />
             ) : (
               <div className="space-y-3">
                 {data.favourites.map((f, i) => (
@@ -137,7 +139,10 @@ export default function Profile() {
                       <p className="font-medium text-gray-800">{f.detected_query}</p>
                       <p className="text-xs text-gray-500 mt-0.5 capitalize">{f.category} · {new Date(f.saved_at).toLocaleDateString('en-IN')}</p>
                     </div>
-                    <button className="text-sm text-primary-600 hover:underline">Re-run</button>
+                    <button
+                      className="text-sm text-primary-600 hover:underline shrink-0"
+                      onClick={() => navigate(`/?q=${encodeURIComponent(f.detected_query)}`)}
+                    >Re-run</button>
                   </div>
                 ))}
               </div>

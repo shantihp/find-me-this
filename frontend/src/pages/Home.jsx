@@ -5,6 +5,7 @@ import LoginModal from '../components/LoginModal'
 import { useSearch } from '../hooks/useSearch'
 import { useRateLimit } from '../hooks/useRateLimit'
 import { useAuth } from '../hooks/useAuth'
+import api from '../api/client'
 
 const STATUS_MSG = {
   identifying: { emoji: '🧠', text: 'Analyzing your image...' },
@@ -14,9 +15,21 @@ const STATUS_MSG = {
 export default function Home() {
   const { run, reset, status, identified, results, error } = useSearch()
   const { canSearch, increment, remaining } = useRateLimit()
-  const { user } = useAuth()
+  const { user, openLogin } = useAuth()
   const [showLogin, setShowLogin] = useState(false)
   const [imagePreview, setImagePreview] = useState(null)
+  const [savedSearch, setSavedSearch] = useState(false)
+
+  async function saveSearch() {
+    if (!user) { setShowLogin(true); return }
+    try {
+      await api.post('/favourites', {
+        detected_query: identified.search_query,
+        category: identified.category,
+      })
+      setSavedSearch(true)
+    } catch { /* silent */ }
+  }
 
   async function handleImage(base64, previewUrl) {
     if (!user && !canSearch) {
@@ -24,6 +37,7 @@ export default function Home() {
       return
     }
     setImagePreview(previewUrl)
+    setSavedSearch(false)
     if (!user) increment()
     const result = await run(base64)
     if (result?.limitReached) setShowLogin(true)
@@ -94,7 +108,16 @@ export default function Home() {
                 {results.length} products found across {new Set(results.map(r => r.platform)).size} platforms
               </p>
             </div>
-            <button onClick={reset} className="text-sm text-primary-600 hover:underline">New search</button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={saveSearch}
+                title={savedSearch ? 'Search saved' : 'Save this search'}
+                className={`text-sm flex items-center gap-1.5 border rounded-full px-3 py-1.5 transition ${savedSearch ? 'text-amber-500 border-amber-300 bg-amber-50' : 'text-gray-500 border-gray-200 hover:border-amber-300 hover:text-amber-500'}`}
+              >
+                {savedSearch ? '★ Saved' : '☆ Save search'}
+              </button>
+              <button onClick={reset} className="text-sm text-primary-600 hover:underline">New search</button>
+            </div>
           </div>
 
           {imagePreview && (

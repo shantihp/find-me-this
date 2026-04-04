@@ -26,6 +26,14 @@ export function useSearch() {
       })
       setResults(products)
       setStatus('done')
+
+      // Record history (fire-and-forget, silent if unauthenticated)
+      api.post('/history', {
+        detected_query: item.search_query,
+        category: item.category,
+        result_count: products.length,
+      }).catch(() => {})
+
       return { item, products }
     } catch (err) {
       if (err.response?.status === 429) {
