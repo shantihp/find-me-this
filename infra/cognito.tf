@@ -69,21 +69,6 @@ resource "aws_cognito_user_pool_client" "spa" {
 
   supported_identity_providers = ["COGNITO"]
 
-  # Callback URLs — Amplify URL is added here; update after first Amplify deploy
-  callback_urls = [
-    "http://localhost:3000",
-    "https://${var.amplify_branch}.${aws_amplify_app.frontend.default_domain}",
-  ]
-
-  logout_urls = [
-    "http://localhost:3000",
-    "https://${var.amplify_branch}.${aws_amplify_app.frontend.default_domain}",
-  ]
-
-  allowed_oauth_flows                  = ["code"]
-  allowed_oauth_flows_user_pool_client = true
-  allowed_oauth_scopes                 = ["openid", "email", "profile"]
-
   prevent_user_existence_errors = "ENABLED"
 }
 
