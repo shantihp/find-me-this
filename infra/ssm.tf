@@ -1,11 +1,11 @@
 # Secrets stored as SecureString — Lambda reads these at runtime via env var injection
 # (values are resolved by Terraform, not fetched by Lambda at startup)
 
-resource "aws_ssm_parameter" "openai_api_key" {
-  name        = "/findmethis/openai_api_key"
-  description = "OpenAI API key for GPT-4o Vision"
+resource "aws_ssm_parameter" "gemini_api_key" {
+  name        = "/findmethis/gemini_api_key"
+  description = "Google Gemini API key for image identification"
   type        = "SecureString"
-  value       = var.openai_api_key
+  value       = var.gemini_api_key
 
   tags = local.tags
 }
