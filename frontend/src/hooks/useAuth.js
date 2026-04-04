@@ -26,7 +26,8 @@ export function useAuthInit() {
       const session = await fetchAuthSession()
       const token = session.tokens?.idToken?.toString()
       if (token) localStorage.setItem('auth_token', token)
-      setUser({ id: cognitoUser.userId, email: cognitoUser.signInDetails?.loginId })
+      const payload = session.tokens?.idToken?.payload
+      setUser({ id: cognitoUser.userId, email: cognitoUser.signInDetails?.loginId, name: payload?.given_name || null })
     } catch {
       localStorage.removeItem('auth_token')
       setUser(null)

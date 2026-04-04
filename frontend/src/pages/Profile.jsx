@@ -44,8 +44,7 @@ export default function Profile() {
     navigate('/')
   }
 
-  // Derive display name from email (part before @)
-  const displayName = user?.email ? user.email.split('@')[0] : 'User'
+  const displayName = user?.name || (user?.email ? user.email.split('@')[0] : 'User')
   const avatarLetter = displayName[0].toUpperCase()
 
   if (!user) return null

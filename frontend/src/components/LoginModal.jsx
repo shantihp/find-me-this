@@ -10,6 +10,7 @@ export default function LoginModal({ onClose, reason }) {
   const ref = useRef()
   const [view, setView] = useState(VIEWS.SIGN_IN)
   const [email, setEmail] = useState('')
+  const [firstName, setFirstName] = useState('')
   const [password, setPassword] = useState('')
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
@@ -32,7 +33,7 @@ export default function LoginModal({ onClose, reason }) {
       const token = session.tokens?.idToken?.toString()
       if (token) localStorage.setItem('auth_token', token)
       const payload = session.tokens?.idToken?.payload
-      setUser({ id: payload?.sub, email: payload?.email })
+      setUser({ id: payload?.sub, email: payload?.email, name: payload?.given_name || null })
       onClose()
     } catch (err) {
       if (err.name === 'UserNotConfirmedException') {
@@ -50,7 +51,7 @@ export default function LoginModal({ onClose, reason }) {
     e.preventDefault()
     setLoading(true); setError('')
     try {
-      await signUp({ username: email, password, options: { userAttributes: { email } } })
+      await signUp({ username: email, password, options: { userAttributes: { email, given_name: firstName.trim() } } })
       setView(VIEWS.CONFIRM)
     } catch (err) {
       setError(friendlyError(err))
@@ -70,7 +71,7 @@ export default function LoginModal({ onClose, reason }) {
       const token = session.tokens?.idToken?.toString()
       if (token) localStorage.setItem('auth_token', token)
       const payload = session.tokens?.idToken?.payload
-      setUser({ id: payload?.sub, email: payload?.email })
+      setUser({ id: payload?.sub, email: payload?.email, name: payload?.given_name || null })
       onClose()
     } catch (err) {
       setError(friendlyError(err))
@@ -156,7 +157,12 @@ export default function LoginModal({ onClose, reason }) {
         {view === VIEWS.SIGN_UP && (
           <form onSubmit={handleSignUp} className="space-y-3">
             <input
-              type="email" placeholder="Email address" required autoFocus
+              type="text" placeholder="First name" required autoFocus
+              value={firstName} onChange={e => { setFirstName(e.target.value); clearError() }}
+              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
+            />
+            <input
+              type="email" placeholder="Email address" required
               value={email} onChange={e => { setEmail(e.target.value); clearError() }}
               className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
             />
