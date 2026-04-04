@@ -10,8 +10,8 @@ variable "app_name" {
   default     = "FindMeThis"
 }
 
-variable "openai_api_key" {
-  description = "OpenAI API key for GPT-4o Vision (stored in SSM SecureString)"
+variable "gemini_api_key" {
+  description = "Google Gemini API key for image identification (stored in SSM SecureString)"
   type        = string
   sensitive   = true
 }
