@@ -1,0 +1,81 @@
+# ── Node / Frontend ─────────────────────────────────────────────
+node_modules/
+dist/
+dist-ssr/
+.vite/
+*.local
+
+# ── Python / Backend ────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+*.egg
+.eggs/
+build/
+develop-eggs/
+lib/
+lib64/
+sdist/
+wheels/
+*.whl
+MANIFEST
+.installed.cfg
+
+# ── Virtual environments ─────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+.env
+.env.local
+.env.*.local
+
+# ── AWS SAM / CDK ────────────────────────────────────────────────
+.aws-sam/
+cdk.out/
+samconfig.toml
+
+# ── AWS credentials (never commit) ───────────────────────────────
+.aws/
+credentials
+aws-exports.js
+
+# ── IDE / Editor ─────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ── Logs ─────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+logs/
+
+# ── Test / Coverage ──────────────────────────────────────────────
+coverage/
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.tox/
+nosetests.xml
+coverage.xml
+*.cover
+
+# ── Misc ─────────────────────────────────────────────────────────
+*.zip
+*.tar.gz
+*.bak
+.cache/
+.temp/
+tmp/
