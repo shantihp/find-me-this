@@ -47,3 +47,18 @@ resource "aws_iam_role_policy" "lambda_dynamodb" {
   role   = aws_iam_role.lambda.id
   policy = data.aws_iam_policy_document.lambda_dynamodb.json
 }
+
+# S3 access — Lambda reads its own deployment package on cold start
+data "aws_iam_policy_document" "lambda_s3" {
+  statement {
+    effect    = "Allow"
+    actions   = ["s3:GetObject"]
+    resources = ["${aws_s3_bucket.lambda_code.arn}/*"]
+  }
+}
+
+resource "aws_iam_role_policy" "lambda_s3" {
+  name   = "${var.app_name}-LambdaS3"
+  role   = aws_iam_role.lambda.id
+  policy = data.aws_iam_policy_document.lambda_s3.json
+}

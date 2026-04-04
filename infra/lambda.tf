@@ -7,7 +7,6 @@ locals {
   build_dir    = "${path.module}/.build"
   zip_path     = "${path.module}/.build.zip"
 
-  # Hash of all backend source files — triggers rebuild when anything changes
   backend_hash = sha256(join("", [
     filesha256("${local.backend_dir}/requirements.txt"),
     filesha256("${local.backend_dir}/handler.py"),
@@ -17,7 +16,6 @@ locals {
 resource "null_resource" "lambda_build" {
   triggers = {
     backend_hash = local.backend_hash
-    # Also rebuild if any file inside app/ changes
     app_sources = sha256(join("", [
       for f in sort(fileset("${local.backend_dir}/app", "**/*.py")) :
       filesha256("${local.backend_dir}/app/${f}")
@@ -56,12 +54,39 @@ data "archive_file" "lambda" {
   depends_on = [null_resource.lambda_build]
 }
 
+# S3 bucket for Lambda code — avoids the 70MB direct-upload limit
+resource "aws_s3_bucket" "lambda_code" {
+  bucket        = lower("${var.app_name}-lambda-code-${data.aws_caller_identity.current.account_id}")
+  force_destroy = true
+
+  tags = local.tags
+}
+
+resource "aws_s3_bucket_versioning" "lambda_code" {
+  bucket = aws_s3_bucket.lambda_code.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+data "aws_caller_identity" "current" {}
+
+resource "aws_s3_object" "lambda_zip" {
+  bucket = aws_s3_bucket.lambda_code.id
+  key    = "FindMeThis-Api.zip"
+  source = data.archive_file.lambda.output_path
+  etag   = data.archive_file.lambda.output_md5
+
+  depends_on = [data.archive_file.lambda]
+}
+
 resource "aws_lambda_function" "api" {
   function_name    = "${var.app_name}-Api"
   role             = aws_iam_role.lambda.arn
   runtime          = "python3.12"
   handler          = "handler.handler"
-  filename         = data.archive_file.lambda.output_path
+  s3_bucket        = aws_s3_bucket.lambda_code.id
+  s3_key           = aws_s3_object.lambda_zip.key
   source_code_hash = data.archive_file.lambda.output_base64sha256
   timeout          = var.lambda_timeout
   memory_size      = var.lambda_memory
