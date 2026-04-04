@@ -38,6 +38,16 @@ ENV/
 cdk.out/
 samconfig.toml
 
+# ── Terraform ────────────────────────────────────────────────────
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
+*.tfvars
+!*.tfvars.example
+infra/.build/
+infra/.build.zip
+
 # ── AWS credentials (never commit) ───────────────────────────────
 .aws/
 credentials
