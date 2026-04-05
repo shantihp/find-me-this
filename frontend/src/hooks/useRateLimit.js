@@ -1,38 +1,33 @@
-import { useState, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import api from '../api/client'
+import { useAuth } from './useAuth'
 
 const LIMIT = 10
-const KEY = 'fto_rate_limit'
-
-function getTodayKey() {
-  return new Date().toISOString().slice(0, 10) // YYYY-MM-DD
-}
-
-function loadState() {
-  try {
-    const raw = localStorage.getItem(KEY)
-    if (!raw) return { date: getTodayKey(), count: 0 }
-    const state = JSON.parse(raw)
-    // Reset if it's a new day
-    if (state.date !== getTodayKey()) return { date: getTodayKey(), count: 0 }
-    return state
-  } catch {
-    return { date: getTodayKey(), count: 0 }
-  }
-}
 
 export function useRateLimit() {
-  const [state, setState] = useState(loadState)
+  const { user } = useAuth()
+  const [state, setState] = useState({ count: 0, limit: LIMIT, remaining: LIMIT, allowed: true })
 
-  const increment = useCallback(() => {
-    setState((prev) => {
-      const next = { date: getTodayKey(), count: prev.count + 1 }
-      localStorage.setItem(KEY, JSON.stringify(next))
-      return next
-    })
-  }, [])
+  const refresh = useCallback(async () => {
+    if (user) {
+      setState({ count: 0, limit: LIMIT, remaining: LIMIT, allowed: true })
+      return
+    }
+    try {
+      const { data } = await api.get('/rate-limit/status')
+      setState(data)
+    } catch {
+      // fail open — don't block searches if status check fails
+    }
+  }, [user])
 
-  const canSearch = state.count < LIMIT
-  const remaining = Math.max(0, LIMIT - state.count)
+  useEffect(() => { refresh() }, [refresh])
 
-  return { count: state.count, remaining, canSearch, limit: LIMIT, increment }
+  return {
+    count: state.count,
+    remaining: state.remaining,
+    canSearch: state.allowed,
+    limit: state.limit,
+    refresh,
+  }
 }

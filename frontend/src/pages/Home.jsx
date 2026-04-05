@@ -14,7 +14,7 @@ const STATUS_MSG = {
 
 export default function Home() {
   const { run, runText, reset, status, identified, results, error } = useSearch()
-  const { canSearch, increment, remaining } = useRateLimit()
+  const { canSearch, remaining, refresh } = useRateLimit()
   const { user } = useAuth()
   const [showLogin, setShowLogin] = useState(false)
   const [imagePreview, setImagePreview] = useState(null)
@@ -38,8 +38,8 @@ export default function Home() {
     if (!user && !canSearch) { setShowLogin(true); return }
     setImagePreview(previewUrl)
     setSavedSearch(false)
-    if (!user) increment()
     const result = await run(base64)
+    if (!user) refresh()
     if (result?.limitReached) setShowLogin(true)
   }
 
@@ -49,8 +49,8 @@ export default function Home() {
     if (!user && !canSearch) { setShowLogin(true); return }
     setImagePreview(null)
     setSavedSearch(false)
-    if (!user) increment()
     const result = await runText(prompt.trim())
+    if (!user) refresh()
     if (result?.limitReached) setShowLogin(true)
   }
 

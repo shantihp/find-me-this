@@ -14,6 +14,24 @@ def _client():
         _dynamo = boto3.client("dynamodb", region_name=os.getenv("AWS_REGION", "ap-south-1"))
     return _dynamo
 
+def get_status(ip: str) -> dict:
+    """Returns current count without incrementing. Used for status checks."""
+    today = date.today().isoformat()
+    pk = f"IP#{ip}"
+    sk = f"DATE#{today}"
+
+    try:
+        resp = _client().get_item(
+            TableName=TABLE,
+            Key={"pk": {"S": pk}, "sk": {"S": sk}},
+        )
+        count = int(resp.get("Item", {}).get("count", {}).get("N", 0))
+        remaining = max(0, DAILY_LIMIT - count)
+        return {"count": count, "limit": DAILY_LIMIT, "remaining": remaining, "allowed": remaining > 0}
+    except ClientError:
+        return {"count": 0, "limit": DAILY_LIMIT, "remaining": DAILY_LIMIT, "allowed": True}
+
+
 def check_and_increment(ip: str, user_id: str | None) -> dict:
     """Returns {'allowed': bool, 'count': int, 'limit': int, 'authenticated': bool}"""
     if user_id:
