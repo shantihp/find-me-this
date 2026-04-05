@@ -151,23 +151,33 @@ export default function Profile() {
         </button>
       </div>
 
-      {/* Stats — clickable, navigate to tab */}
+      {/* Stats — skeleton while loading, clickable once loaded */}
       <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
-        {[
-          { label: 'Bookmarks',     value: data.bookmarks.length,  emoji: '🔖', tab: 'Bookmarks'     },
-          { label: 'Saved Searches',value: data.favourites.length, emoji: '⭐', tab: 'Saved Searches' },
-          { label: 'Searches',      value: data.history.length,    emoji: '🔍', tab: 'History'        },
-        ].map(s => (
-          <button
-            key={s.label}
-            onClick={() => setTab(s.tab)}
-            className={`bg-white rounded-xl border p-3 sm:p-4 text-center transition hover:border-primary-300 hover:shadow-sm ${tab === s.tab ? 'border-primary-400 shadow-sm' : 'border-gray-200'}`}
-          >
-            <p className="text-xl sm:text-2xl mb-1">{s.emoji}</p>
-            <p className="text-xl sm:text-2xl font-bold text-gray-900">{s.value}</p>
-            <p className="text-[10px] sm:text-xs text-gray-500 leading-tight mt-0.5">{s.label}</p>
-          </button>
-        ))}
+        {loading ? (
+          [1, 2, 3].map(i => (
+            <div key={i} className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4 animate-pulse">
+              <div className="w-7 h-7 bg-gray-200 rounded-full mx-auto mb-2" />
+              <div className="h-6 bg-gray-200 rounded-lg mx-auto w-10 mb-1.5" />
+              <div className="h-2.5 bg-gray-200 rounded mx-auto w-14" />
+            </div>
+          ))
+        ) : (
+          [
+            { label: 'Bookmarks',     value: data.bookmarks.length,  emoji: '🔖', tab: 'Bookmarks'     },
+            { label: 'Saved Searches',value: data.favourites.length, emoji: '⭐', tab: 'Saved Searches' },
+            { label: 'Searches',      value: data.history.length,    emoji: '🔍', tab: 'History'        },
+          ].map(s => (
+            <button
+              key={s.label}
+              onClick={() => setTab(s.tab)}
+              className={`bg-white rounded-xl border p-3 sm:p-4 text-center transition hover:border-primary-300 hover:shadow-sm ${tab === s.tab ? 'border-primary-400 shadow-sm' : 'border-gray-200'}`}
+            >
+              <p className="text-xl sm:text-2xl mb-1">{s.emoji}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{s.value}</p>
+              <p className="text-[10px] sm:text-xs text-gray-500 leading-tight mt-0.5">{s.label}</p>
+            </button>
+          ))
+        )}
       </div>
 
       {/* Tabs — horizontally scrollable on mobile */}
@@ -186,7 +196,7 @@ export default function Profile() {
       </div>
 
       {loading && tab !== 'Samples' ? (
-        <div className="text-center py-16 text-gray-400">Loading...</div>
+        <SkeletonTab tab={tab} />
       ) : (
         <>
           {/* Bookmarks */}
@@ -355,6 +365,41 @@ export default function Profile() {
           )}
         </>
       )}
+    </div>
+  )
+}
+
+function SkeletonTab({ tab }) {
+  // Grid skeleton for Bookmarks
+  if (tab === 'Bookmarks') {
+    return (
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        {[1, 2, 3, 4, 5, 6].map(i => (
+          <div key={i} className="bg-white rounded-xl border border-gray-200 overflow-hidden animate-pulse">
+            <div className="w-full h-40 bg-gray-200" />
+            <div className="p-3 space-y-2">
+              <div className="h-3 bg-gray-200 rounded w-full" />
+              <div className="h-3 bg-gray-200 rounded w-2/3" />
+              <div className="h-7 bg-gray-200 rounded-lg w-full mt-3" />
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  // List skeleton for Saved Searches & History
+  return (
+    <div className="space-y-3">
+      {[1, 2, 3, 4].map(i => (
+        <div key={i} className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4 animate-pulse">
+          <div className="w-11 h-11 bg-gray-200 rounded-lg shrink-0" />
+          <div className="flex-1 space-y-2">
+            <div className="h-3.5 bg-gray-200 rounded w-3/4" />
+            <div className="h-2.5 bg-gray-200 rounded w-1/3" />
+          </div>
+        </div>
+      ))}
     </div>
   )
 }
