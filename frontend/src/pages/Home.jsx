@@ -14,9 +14,10 @@ const STATUS_MSG = {
 
 export default function Home() {
   const { run, runText, reset, status, identified, results, error } = useSearch()
-  const { canSearch, remaining, refresh } = useRateLimit()
+  const { canSearch, remaining, refresh, decrement } = useRateLimit()
   const { user } = useAuth()
   const [showLogin, setShowLogin] = useState(false)
+  const [loginReason, setLoginReason] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
   const [savedSearch, setSavedSearch] = useState(false)
   const [mode, setMode] = useState('image') // 'image' | 'text'
@@ -34,24 +35,41 @@ export default function Home() {
     } catch { /* silent */ }
   }
 
+  function openLimitModal() {
+    setLoginReason('limit')
+    setShowLogin(true)
+  }
+
   async function handleImage(base64, previewUrl) {
-    if (!user && !canSearch) { setShowLogin(true); return }
+    if (!user && !canSearch) { openLimitModal(); return }
     setImagePreview(previewUrl)
     setSavedSearch(false)
     const result = await run(base64)
-    if (!user) refresh()
-    if (result?.limitReached) setShowLogin(true)
+    if (!user) {
+      if (result?.limitReached) {
+        refresh()
+        openLimitModal()
+      } else if (!result?.error) {
+        decrement()
+      }
+    }
   }
 
   async function handleTextSearch(e) {
     e.preventDefault()
     if (!prompt.trim()) return
-    if (!user && !canSearch) { setShowLogin(true); return }
+    if (!user && !canSearch) { openLimitModal(); return }
     setImagePreview(null)
     setSavedSearch(false)
     const result = await runText(prompt.trim())
-    if (!user) refresh()
-    if (result?.limitReached) setShowLogin(true)
+    if (!user) {
+      if (result?.limitReached) {
+        refresh()
+        openLimitModal()
+      } else if (!result?.error) {
+        decrement()
+      }
+    }
   }
 
   function handleReset() {
@@ -216,7 +234,7 @@ export default function Home() {
         </div>
       )}
 
-      {showLogin && <LoginModal onClose={() => setShowLogin(false)} reason={!canSearch ? 'limit' : undefined} />}
+      {showLogin && <LoginModal onClose={() => { setShowLogin(false); setLoginReason(null) }} reason={loginReason} />}
     </div>
   )
 }

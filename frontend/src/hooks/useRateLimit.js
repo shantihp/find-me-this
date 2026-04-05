@@ -4,7 +4,7 @@ import api from '../api/client'
 const LIMIT = 10
 
 export const RateLimitContext = createContext({
-  count: 0, limit: LIMIT, remaining: LIMIT, canSearch: true, loaded: false, refresh: () => {},
+  count: 0, limit: LIMIT, remaining: LIMIT, canSearch: true, loaded: false, refresh: () => {}, decrement: () => {},
 })
 
 export function useRateLimit() {
@@ -30,6 +30,15 @@ export function useRateLimitInit(user) {
 
   useEffect(() => { refresh() }, [refresh])
 
+  const decrement = useCallback(() => {
+    if (user) return
+    setState(s => {
+      const newCount = s.count + 1
+      const newRemaining = Math.max(0, s.remaining - 1)
+      return { ...s, count: newCount, remaining: newRemaining, allowed: newRemaining > 0 }
+    })
+  }, [user])
+
   return {
     count: state.count,
     remaining: state.remaining,
@@ -37,5 +46,6 @@ export function useRateLimitInit(user) {
     limit: state.limit,
     loaded: state.loaded,
     refresh,
+    decrement,
   }
 }

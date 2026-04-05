@@ -24,6 +24,7 @@ def get_status(ip: str) -> dict:
         resp = _client().get_item(
             TableName=TABLE,
             Key={"pk": {"S": pk}, "sk": {"S": sk}},
+            ConsistentRead=True,
         )
         count = int(resp.get("Item", {}).get("count", {}).get("N", 0))
         remaining = max(0, DAILY_LIMIT - count)
