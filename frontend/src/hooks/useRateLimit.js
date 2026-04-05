@@ -1,11 +1,17 @@
-import { useState, useEffect, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import api from '../api/client'
-import { useAuth } from './useAuth'
 
 const LIMIT = 10
 
+export const RateLimitContext = createContext({
+  count: 0, limit: LIMIT, remaining: LIMIT, canSearch: true, refresh: () => {},
+})
+
 export function useRateLimit() {
-  const { user } = useAuth()
+  return useContext(RateLimitContext)
+}
+
+export function useRateLimitInit(user) {
   const [state, setState] = useState({ count: 0, limit: LIMIT, remaining: LIMIT, allowed: true })
 
   const refresh = useCallback(async () => {

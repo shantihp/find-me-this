@@ -11,9 +11,11 @@ import FolderView from './pages/FolderView'
 import LoginModal from './components/LoginModal'
 import ContactModal from './components/ContactModal'
 import { AuthContext, useAuthInit } from './hooks/useAuth'
+import { RateLimitContext, useRateLimitInit } from './hooks/useRateLimit'
 
 export default function App() {
   const { user, setUser, loading, logout } = useAuthInit()
+  const rateLimit = useRateLimitInit(user)
   const [showLogin, setShowLogin] = useState(false)
   const [loginReason, setLoginReason] = useState(null)
   const [showContact, setShowContact] = useState(false)
@@ -28,6 +30,7 @@ export default function App() {
 
   return (
     <AuthContext.Provider value={{ user, setUser, openLogin, logout }}>
+      <RateLimitContext.Provider value={rateLimit}>
       <div className="min-h-screen flex flex-col">
         <Navbar onLoginClick={() => openLogin()} onLogoClick={() => setHomeKey(k => k + 1)} />
         {/* pb-16 sm:pb-0 reserves space for the mobile bottom nav */}
@@ -52,6 +55,7 @@ export default function App() {
           <ContactModal onClose={() => setShowContact(false)} />
         )}
       </div>
+      </RateLimitContext.Provider>
     </AuthContext.Provider>
   )
 }
