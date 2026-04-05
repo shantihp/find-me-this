@@ -15,7 +15,6 @@ Globals:
         OPENAI_API_KEY:        !Sub "{{resolve:ssm:/findmethis/openai_api_key}}"
         COGNITO_USER_POOL_ID:  !Sub "{{resolve:ssm:/findmethis/cognito_user_pool_id:1}}"
         COGNITO_CLIENT_ID:     !Sub "{{resolve:ssm:/findmethis/cognito_client_id:1}}"
-        SAMPLES_BUCKET:        !Ref SamplesBucket
 
 Resources:
 
@@ -31,8 +30,6 @@ Resources:
             TableName: !Ref RateLimitsTable
         - DynamoDBCrudPolicy:
             TableName: !Ref UserDataTable
-        - S3CrudPolicy:
-            BucketName: !Ref SamplesBucket
       Events:
         Api:
           Type: HttpApi
@@ -95,22 +92,6 @@ Resources:
       TimeToLiveSpecification:
         AttributeName: ttl
         Enabled: true
-
-  # ── S3: sample photo storage ─────────────────────────────────────
-  SamplesBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: !Sub "findmethis-samples-${AWS::AccountId}"
-      PublicAccessBlockConfiguration:
-        BlockPublicAcls: true
-        BlockPublicPolicy: true
-        IgnorePublicAcls: true
-        RestrictPublicBuckets: true
-      LifecycleConfiguration:
-        Rules:
-          - Id: AutoDeleteAfter5Days
-            Status: Enabled
-            ExpirationInDays: 5
 
 Outputs:
   ApiUrl:

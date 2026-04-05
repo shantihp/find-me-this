@@ -100,6 +100,7 @@ resource "aws_lambda_function" "api" {
       SERPAPI_KEY           = var.serpapi_key
       COGNITO_USER_POOL_ID  = aws_cognito_user_pool.main.id
       COGNITO_CLIENT_ID     = aws_cognito_user_pool_client.spa.id
+      SAMPLES_BUCKET        = aws_s3_bucket.samples.id
     }
   }
 

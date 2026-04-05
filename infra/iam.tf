@@ -62,3 +62,22 @@ resource "aws_iam_role_policy" "lambda_s3" {
   role   = aws_iam_role.lambda.id
   policy = data.aws_iam_policy_document.lambda_s3.json
 }
+
+# S3 access — samples bucket (user-uploaded photos)
+data "aws_iam_policy_document" "lambda_samples_s3" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "s3:PutObject",
+      "s3:GetObject",
+      "s3:DeleteObject",
+    ]
+    resources = ["${aws_s3_bucket.samples.arn}/*"]
+  }
+}
+
+resource "aws_iam_role_policy" "lambda_samples_s3" {
+  name   = "${var.app_name}-LambdaSamplesS3"
+  role   = aws_iam_role.lambda.id
+  policy = data.aws_iam_policy_document.lambda_samples_s3.json
+}
