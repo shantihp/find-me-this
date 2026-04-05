@@ -58,6 +58,11 @@ variable "lambda_memory" {
   default     = 512
 }
 
+variable "recaptcha_site_key" {
+  description = "Google reCAPTCHA v2 site key (public) for the frontend widget"
+  type        = string
+}
+
 variable "recaptcha_secret_key" {
   description = "Google reCAPTCHA v2 secret key for contact form verification"
   type        = string
