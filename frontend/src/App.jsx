@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import Profile from './pages/Profile'
+import SampleView from './pages/SampleView'
 import LoginModal from './components/LoginModal'
 import { AuthContext, useAuthInit } from './hooks/useAuth'
 
@@ -28,6 +29,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Home key={homeKey} />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/s/:sampleId" element={<SampleView />} />
           </Routes>
         </main>
         {showLogin && (

@@ -32,16 +32,36 @@ export default function ResultsGrid({ products }) {
       <div className="flex items-center justify-between mb-4 lg:hidden">
         <p className="text-sm text-gray-600">{filtered.length} results</p>
         <button
-          onClick={() => setShowFilters(v => !v)}
+          onClick={() => setShowFilters(true)}
           className="text-sm font-medium text-primary-600 border border-primary-300 rounded-full px-3 py-1"
         >
-          {showFilters ? 'Hide' : 'Filters & Sort'}
+          Filters & Sort
         </button>
       </div>
 
+      {/* Mobile filter drawer */}
+      {showFilters && (
+        <>
+          <div
+            className="fixed inset-0 z-20 bg-black/25 lg:hidden"
+            onClick={() => setShowFilters(false)}
+          />
+          <div className="fixed top-0 left-0 h-full w-60 bg-white z-30 shadow-xl p-5 overflow-y-auto lg:hidden">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="font-semibold text-gray-800">Filters & Sort</h2>
+              <button
+                onClick={() => setShowFilters(false)}
+                className="text-gray-400 hover:text-gray-600 text-lg leading-none"
+              >✕</button>
+            </div>
+            <FilterSidebar filters={filters} onChange={setFilters} total={filtered.length} />
+          </div>
+        </>
+      )}
+
       <div className="flex gap-6">
-        {/* Sidebar */}
-        <aside className={`w-44 shrink-0 ${showFilters ? 'block' : 'hidden'} lg:block`}>
+        {/* Desktop sidebar */}
+        <aside className="w-44 shrink-0 hidden lg:block">
           <FilterSidebar filters={filters} onChange={setFilters} total={filtered.length} />
         </aside>
 
