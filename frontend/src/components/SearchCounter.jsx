@@ -1,8 +1,8 @@
 import { useRateLimit } from '../hooks/useRateLimit'
 
 export default function SearchCounter() {
-  const { count, limit, remaining } = useRateLimit()
-  if (count === 0) return null
+  const { count, limit, remaining, loaded } = useRateLimit()
+  if (!loaded) return null
 
   const pct = (count / limit) * 100
   const color = remaining <= 2 ? 'text-red-500' : remaining <= 5 ? 'text-amber-500' : 'text-gray-500'
