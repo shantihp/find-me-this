@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import identify, search, bookmarks, favourites, history, profile, text_search, samples
+from app.routers import identify, search, bookmarks, favourites, history, profile, text_search, samples, contact
 
-app = FastAPI(title="FindMeThis API", version="0.1.0")
+app = FastAPI(title="FindThisForMe API", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -19,6 +19,7 @@ app.include_router(history.router)
 app.include_router(profile.router)
 app.include_router(text_search.router)
 app.include_router(samples.router)
+app.include_router(contact.router)
 
 @app.get("/health")
 def health():

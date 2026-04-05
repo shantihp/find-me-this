@@ -3,17 +3,20 @@ import { Routes, Route } from 'react-router-dom'
 import { useState } from 'react'
 import Navbar from './components/Navbar'
 import BottomNav from './components/BottomNav'
+import Footer from './components/Footer'
 import Home from './pages/Home'
 import Profile from './pages/Profile'
 import SampleView from './pages/SampleView'
 import FolderView from './pages/FolderView'
 import LoginModal from './components/LoginModal'
+import ContactModal from './components/ContactModal'
 import { AuthContext, useAuthInit } from './hooks/useAuth'
 
 export default function App() {
   const { user, setUser, loading, logout } = useAuthInit()
   const [showLogin, setShowLogin] = useState(false)
   const [loginReason, setLoginReason] = useState(null)
+  const [showContact, setShowContact] = useState(false)
   const [homeKey, setHomeKey] = useState(0)
 
   function openLogin(reason) {
@@ -37,12 +40,16 @@ export default function App() {
             <Route path="/s/:sampleId" element={<SampleView />} />
           </Routes>
         </main>
-        <BottomNav />
+        <Footer onContactClick={() => setShowContact(true)} />
+        <BottomNav onContactClick={() => setShowContact(true)} />
         {showLogin && (
           <LoginModal
             reason={loginReason}
             onClose={() => { setShowLogin(false); setLoginReason(null) }}
           />
+        )}
+        {showContact && (
+          <ContactModal onClose={() => setShowContact(false)} />
         )}
       </div>
     </AuthContext.Provider>

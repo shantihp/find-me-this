@@ -72,7 +72,7 @@ export default function FolderView() {
           </p>
         </div>
         <Link to="/" className="text-sm font-bold text-primary-600 hover:text-primary-700 shrink-0 mt-1">
-          FindMeThis
+          FindThisForMe
         </Link>
       </div>
 

@@ -22,7 +22,7 @@ export default function SampleView() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 py-12">
       <Link to="/" className="mb-8 text-xl font-bold text-primary-600 hover:text-primary-700 transition">
-        FindMeThis
+        FindThisForMe
       </Link>
 
       {loading && (

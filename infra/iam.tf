@@ -81,3 +81,21 @@ resource "aws_iam_role_policy" "lambda_samples_s3" {
   role   = aws_iam_role.lambda.id
   policy = data.aws_iam_policy_document.lambda_samples_s3.json
 }
+
+# SES access — send contact form emails
+data "aws_iam_policy_document" "lambda_ses" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "ses:SendEmail",
+      "ses:SendRawEmail",
+    ]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_role_policy" "lambda_ses" {
+  name   = "${var.app_name}-LambdaSES"
+  role   = aws_iam_role.lambda.id
+  policy = data.aws_iam_policy_document.lambda_ses.json
+}

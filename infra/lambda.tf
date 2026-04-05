@@ -101,6 +101,8 @@ resource "aws_lambda_function" "api" {
       COGNITO_USER_POOL_ID  = aws_cognito_user_pool.main.id
       COGNITO_CLIENT_ID     = aws_cognito_user_pool_client.spa.id
       SAMPLES_BUCKET        = aws_s3_bucket.samples.id
+      RECAPTCHA_SECRET_KEY  = var.recaptcha_secret_key
+      CONTACT_EMAIL         = var.contact_email
     }
   }
 

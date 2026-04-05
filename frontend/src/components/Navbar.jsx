@@ -10,7 +10,7 @@ export default function Navbar({ onLoginClick, onLogoClick }) {
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
         <Link to="/" onClick={onLogoClick} className="flex items-center gap-2 font-bold text-lg text-primary-700">
           <span className="text-2xl">🔍</span>
-          <span>FindMeThis</span>
+          <span>FindThisForMe</span>
         </Link>
 
         {/* Desktop: full user section */}

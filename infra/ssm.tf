@@ -39,3 +39,21 @@ resource "aws_ssm_parameter" "cognito_client_id" {
 
   tags = local.tags
 }
+
+resource "aws_ssm_parameter" "recaptcha_secret_key" {
+  name        = "/findmethis/recaptcha_secret_key"
+  description = "Google reCAPTCHA v2 secret key for contact form"
+  type        = "SecureString"
+  value       = var.recaptcha_secret_key
+
+  tags = local.tags
+}
+
+resource "aws_ssm_parameter" "contact_email" {
+  name        = "/findmethis/contact_email"
+  description = "SES-verified email address for contact form submissions"
+  type        = "SecureString"
+  value       = var.contact_email
+
+  tags = local.tags
+}

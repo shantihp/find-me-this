@@ -57,3 +57,15 @@ variable "lambda_memory" {
   type        = number
   default     = 512
 }
+
+variable "recaptcha_secret_key" {
+  description = "Google reCAPTCHA v2 secret key for contact form verification"
+  type        = string
+  sensitive   = true
+}
+
+variable "contact_email" {
+  description = "Email address (SES-verified) to receive contact form submissions"
+  type        = string
+  sensitive   = true
+}

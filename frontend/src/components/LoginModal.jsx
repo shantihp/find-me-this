@@ -124,7 +124,7 @@ export default function LoginModal({ onClose, reason }) {
   }
 
   const HEADERS = {
-    [VIEWS.SIGN_IN]:  { title: reason === 'limit' ? "You've used all free searches" : 'Sign in to FindMeThis',
+    [VIEWS.SIGN_IN]:  { title: reason === 'limit' ? "You've used all free searches" : 'Sign in to FindThisForMe',
                         sub: reason === 'limit' ? "Sign in for unlimited searches and bookmarks — it's free." : 'Save products, bookmark searches, and get unlimited results.' },
     [VIEWS.SIGN_UP]:  { title: 'Create your account', sub: 'Save products, bookmark searches, and get unlimited results.' },
     [VIEWS.CONFIRM]:  { title: 'Check your email', sub: `We sent a 6-digit code to ${email}` },

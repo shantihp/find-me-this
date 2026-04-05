@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 
-export default function BottomNav() {
+export default function BottomNav({ onContactClick }) {
   const { user, openLogin } = useAuth()
   const { pathname } = useLocation()
 
@@ -28,6 +28,19 @@ export default function BottomNav() {
           </svg>
           <span className="text-[10px] font-medium">Search</span>
         </Link>
+
+        {/* Contact */}
+        <button
+          onClick={onContactClick}
+          className="flex-1 flex flex-col items-center justify-center gap-0.5 text-gray-400"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path d="M4 4h16v16H4z" strokeLinecap="round" strokeLinejoin="round" opacity="0" />
+            <rect x="2" y="4" width="20" height="16" rx="2" />
+            <path d="m2 7 10 7 10-7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="text-[10px] font-medium">Contact</span>
+        </button>
 
         {/* Profile / Sign in */}
         {user ? (

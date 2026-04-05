@@ -10,13 +10,14 @@
   },
   "dependencies": {
     "@aws-amplify/auth": "^6.6.0",
+    "@tanstack/react-query": "^5.51.21",
     "aws-amplify": "^6.6.0",
     "axios": "^1.7.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-dropzone": "^14.2.3",
-    "react-router-dom": "^6.26.1",
-    "@tanstack/react-query": "^5.51.21"
+    "react-google-recaptcha": "^3.1.0",
+    "react-router-dom": "^6.26.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",
