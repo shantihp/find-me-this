@@ -45,7 +45,7 @@ export default function UploadZone({ onImage, disabled }) {
             ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
           `}
         >
-          <input {...getInputProps()} capture="environment" />
+          <input {...getInputProps()} />
           <div className="text-4xl sm:text-5xl mb-3">📸</div>
           <p className="text-base sm:text-lg font-semibold text-gray-800">
             {isDragActive ? 'Drop your photo here' : 'Tap to upload a photo'}

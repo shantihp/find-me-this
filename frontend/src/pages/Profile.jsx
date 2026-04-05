@@ -31,7 +31,8 @@ export default function Profile() {
   const [samples, setSamples]             = useState([])
   const [samplesLoaded, setSamplesLoaded] = useState(false)
   const [samplesLoading, setSamplesLoading] = useState(false)
-  const [uploading, setUploading]         = useState(false)
+  const [uploading, setUploading]         = useState(false)   // false | { done, total }
+
   const [copiedId, setCopiedId]           = useState(null)      // individual photo link
   const [copiedFolder, setCopiedFolder]   = useState(null)      // folder link
   const fileInputRef = useRef()
@@ -75,17 +76,21 @@ export default function Profile() {
   }
 
   async function handleFileSelect(e) {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
     e.target.value = ''
-    setUploading(true)
+    setUploading({ done: 0, total: files.length })
     try {
-      const base64 = await fileToBase64(file)
-      await api.post('/samples', {
-        image:     base64,
-        file_name: file.name,
-        mime_type: file.type || 'image/jpeg',
-      })
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        const base64 = await fileToBase64(file)
+        await api.post('/samples', {
+          image:     base64,
+          file_name: file.name,
+          mime_type: file.type || 'image/jpeg',
+        })
+        setUploading({ done: i + 1, total: files.length })
+      }
       await loadSamples()
     } catch { /* silent */ } finally {
       setUploading(false)
@@ -278,17 +283,29 @@ export default function Profile() {
                   ref={fileInputRef}
                   type="file"
                   accept="image/jpeg,image/png,image/webp,image/gif"
-                  capture="environment"
+                  multiple
                   className="hidden"
                   onChange={handleFileSelect}
                 />
                 {uploading ? (
-                  <p className="text-sm text-gray-500 py-2">Uploading…</p>
+                  <div className="py-1 flex flex-col items-center gap-2">
+                    <div className="w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-sm font-medium text-gray-700">
+                      Uploading {uploading.done + 1} of {uploading.total}…
+                    </p>
+                    {/* Progress bar */}
+                    <div className="w-32 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary-500 rounded-full transition-all duration-300"
+                        style={{ width: `${(uploading.done / uploading.total) * 100}%` }}
+                      />
+                    </div>
+                  </div>
                 ) : (
                   <>
                     <p className="text-2xl">📷</p>
-                    <p className="text-sm font-medium text-gray-700">Tap to upload a photo</p>
-                    <p className="text-xs text-gray-400">Auto-deleted after 5 days · JPEG, PNG, WEBP</p>
+                    <p className="text-sm font-medium text-gray-700">Tap to upload photos</p>
+                    <p className="text-xs text-gray-400">Select one or more · Auto-deleted after 5 days</p>
                   </>
                 )}
               </div>
