@@ -32,6 +32,7 @@ export default function FilterSidebar({ filters, onChange, total }) {
         <div className="flex items-center gap-2">
           <input
             type="number"
+            inputMode="decimal"
             placeholder="Min"
             value={minPrice || ''}
             onChange={e => onChange({ ...filters, minPrice: e.target.value ? +e.target.value : null })}
@@ -40,6 +41,7 @@ export default function FilterSidebar({ filters, onChange, total }) {
           <span className="text-gray-400">–</span>
           <input
             type="number"
+            inputMode="decimal"
             placeholder="Max"
             value={maxPrice || ''}
             onChange={e => onChange({ ...filters, maxPrice: e.target.value ? +e.target.value : null })}

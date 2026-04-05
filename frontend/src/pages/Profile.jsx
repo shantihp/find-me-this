@@ -9,8 +9,15 @@ function formatPrice(n) {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n)
 }
 
-function formatDate(ts) {
-  return new Date(ts * 1000).toLocaleDateString('en-IN')
+function formatDayLabel(dateStr) {
+  if (!dateStr) return 'Older uploads'
+  const [y, m, d] = dateStr.split('-').map(Number)
+  const date = new Date(y, m - 1, d)
+  const todayStr = new Date().toISOString().split('T')[0]
+  const yestStr  = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+  if (dateStr === todayStr) return 'Today'
+  if (dateStr === yestStr)  return 'Yesterday'
+  return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 export default function Profile() {
@@ -21,11 +28,12 @@ export default function Profile() {
   const [loading, setLoading] = useState(true)
 
   // Samples state
-  const [samples, setSamples]           = useState([])
+  const [samples, setSamples]             = useState([])
   const [samplesLoaded, setSamplesLoaded] = useState(false)
   const [samplesLoading, setSamplesLoading] = useState(false)
-  const [uploading, setUploading]       = useState(false)
-  const [copiedId, setCopiedId]         = useState(null)
+  const [uploading, setUploading]         = useState(false)
+  const [copiedId, setCopiedId]           = useState(null)      // individual photo link
+  const [copiedFolder, setCopiedFolder]   = useState(null)      // folder link
   const fileInputRef = useRef()
 
   useEffect(() => {
@@ -70,16 +78,14 @@ export default function Profile() {
     const file = e.target.files?.[0]
     if (!file) return
     e.target.value = ''
-
     setUploading(true)
     try {
       const base64 = await fileToBase64(file)
-      const r = await api.post('/samples', {
+      await api.post('/samples', {
         image:     base64,
         file_name: file.name,
         mime_type: file.type || 'image/jpeg',
       })
-      // Reload the list so we get the presigned view URL
       await loadSamples()
     } catch { /* silent */ } finally {
       setUploading(false)
@@ -93,11 +99,16 @@ export default function Profile() {
     } catch { /* silent */ }
   }
 
-  function copyLink(sampleId) {
-    const url = `${window.location.origin}/s/${sampleId}`
-    navigator.clipboard.writeText(url)
+  function copyPhotoLink(sampleId) {
+    navigator.clipboard.writeText(`${window.location.origin}/s/${sampleId}`)
     setCopiedId(sampleId)
     setTimeout(() => setCopiedId(null), 2000)
+  }
+
+  function copyFolderLink(folderId) {
+    navigator.clipboard.writeText(`${window.location.origin}/s/folder/${folderId}`)
+    setCopiedFolder(folderId)
+    setTimeout(() => setCopiedFolder(null), 2000)
   }
 
   async function handleLogout() {
@@ -105,34 +116,43 @@ export default function Profile() {
     navigate('/')
   }
 
+  // Group samples by date_str, newest first
+  const samplesByDay = samples.reduce((acc, s) => {
+    const key = s.date_str || '__unknown__'
+    if (!acc[key]) acc[key] = []
+    acc[key].push(s)
+    return acc
+  }, {})
+  const sortedDays = Object.keys(samplesByDay).sort().reverse()
+
   const displayName = user?.name || (user?.email ? user.email.split('@')[0] : 'User')
   const avatarLetter = displayName[0].toUpperCase()
 
   if (!user) return null
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10">
+    <div className="max-w-4xl mx-auto px-4 py-6 sm:py-10">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-primary-600 text-white flex items-center justify-center text-2xl font-bold shadow">
+      <div className="flex items-center justify-between mb-6 sm:mb-8">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-primary-600 text-white flex items-center justify-center text-xl sm:text-2xl font-bold shadow">
             {avatarLetter}
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">{displayName}</h1>
-            <p className="text-sm text-gray-500">{user.email}</p>
+            <h1 className="text-lg sm:text-xl font-bold text-gray-900">{displayName}</h1>
+            <p className="text-xs sm:text-sm text-gray-500">{user.email}</p>
           </div>
         </div>
         <button
           onClick={handleLogout}
-          className="text-sm text-red-500 hover:text-red-600 border border-red-200 hover:border-red-300 rounded-full px-4 py-1.5 transition"
+          className="text-sm text-red-500 hover:text-red-600 border border-red-200 hover:border-red-300 rounded-full px-3 sm:px-4 py-1.5 transition"
         >
           Sign out
         </button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      {/* Stats — clickable, navigate to tab */}
+      <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
         {[
           { label: 'Bookmarks',     value: data.bookmarks.length,  emoji: '🔖', tab: 'Bookmarks'     },
           { label: 'Saved Searches',value: data.favourites.length, emoji: '⭐', tab: 'Saved Searches' },
@@ -141,26 +161,28 @@ export default function Profile() {
           <button
             key={s.label}
             onClick={() => setTab(s.tab)}
-            className={`bg-white rounded-xl border p-4 text-center transition hover:border-primary-300 hover:shadow-sm ${tab === s.tab ? 'border-primary-400 shadow-sm' : 'border-gray-200'}`}
+            className={`bg-white rounded-xl border p-3 sm:p-4 text-center transition hover:border-primary-300 hover:shadow-sm ${tab === s.tab ? 'border-primary-400 shadow-sm' : 'border-gray-200'}`}
           >
-            <p className="text-2xl mb-1">{s.emoji}</p>
-            <p className="text-2xl font-bold text-gray-900">{s.value}</p>
-            <p className="text-xs text-gray-500">{s.label}</p>
+            <p className="text-xl sm:text-2xl mb-1">{s.emoji}</p>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900">{s.value}</p>
+            <p className="text-[10px] sm:text-xs text-gray-500 leading-tight mt-0.5">{s.label}</p>
           </button>
         ))}
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-gray-100 rounded-xl p-1 w-fit">
-        {TABS.map(t => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${tab === t ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            {t}
-          </button>
-        ))}
+      {/* Tabs — horizontally scrollable on mobile */}
+      <div className="mb-5 sm:mb-6 overflow-x-auto">
+        <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-max min-w-full sm:w-fit">
+          {TABS.map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition ${tab === t ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
       </div>
 
       {loading && tab !== 'Samples' ? (
@@ -180,7 +202,7 @@ export default function Profile() {
                       <p className="text-sm font-medium text-gray-800 line-clamp-2">{b.product_name}</p>
                       <p className="text-sm font-bold text-gray-900 mt-1">{formatPrice(b.price)}</p>
                       <a href={b.product_url} target="_blank" rel="noopener noreferrer"
-                        className="block mt-2 text-xs text-center bg-primary-600 text-white rounded-lg py-1.5 hover:bg-primary-700 transition">
+                        className="block mt-2 text-xs text-center bg-primary-600 text-white rounded-lg py-2 hover:bg-primary-700 transition">
                         View product
                       </a>
                     </div>
@@ -198,9 +220,9 @@ export default function Profile() {
               <div className="space-y-3">
                 {data.favourites.map((f, i) => (
                   <div key={i} className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-xl">🔍</div>
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-800">{f.detected_query}</p>
+                    <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-xl shrink-0">🔍</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-800 truncate">{f.detected_query}</p>
                       <p className="text-xs text-gray-500 mt-0.5 capitalize">{f.category} · {new Date(f.saved_at * 1000).toLocaleDateString('en-IN')}</p>
                     </div>
                     <button
@@ -221,9 +243,9 @@ export default function Profile() {
               <div className="space-y-3">
                 {data.history.map((h, i) => (
                   <div key={i} className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4">
-                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-lg">📸</div>
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-800">{h.detected_query}</p>
+                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-lg shrink-0">📸</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-800 truncate">{h.detected_query}</p>
                       <p className="text-xs text-gray-500 mt-0.5 capitalize">
                         {h.category} · {h.result_count} results · {new Date(h.searched_at * 1000).toLocaleDateString('en-IN')}
                       </p>
@@ -239,63 +261,90 @@ export default function Profile() {
             <div>
               {/* Upload area */}
               <div
-                className="border-2 border-dashed border-gray-200 rounded-xl p-6 mb-6 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-primary-400 hover:bg-primary-50 transition"
+                className="border-2 border-dashed border-gray-200 rounded-xl p-5 mb-6 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-primary-400 hover:bg-primary-50 transition"
                 onClick={() => !uploading && fileInputRef.current?.click()}
               >
                 <input
                   ref={fileInputRef}
                   type="file"
                   accept="image/jpeg,image/png,image/webp,image/gif"
+                  capture="environment"
                   className="hidden"
                   onChange={handleFileSelect}
                 />
                 {uploading ? (
-                  <p className="text-sm text-gray-500">Uploading…</p>
+                  <p className="text-sm text-gray-500 py-2">Uploading…</p>
                 ) : (
                   <>
-                    <p className="text-3xl">📷</p>
-                    <p className="text-sm font-medium text-gray-700">Click to upload a photo</p>
-                    <p className="text-xs text-gray-400">Photos are auto-deleted after 5 days · JPEG, PNG, WEBP</p>
+                    <p className="text-2xl">📷</p>
+                    <p className="text-sm font-medium text-gray-700">Tap to upload a photo</p>
+                    <p className="text-xs text-gray-400">Auto-deleted after 5 days · JPEG, PNG, WEBP</p>
                   </>
                 )}
               </div>
 
-              {/* Grid */}
               {samplesLoading ? (
                 <div className="text-center py-12 text-gray-400 text-sm">Loading…</div>
               ) : samples.length === 0 ? (
-                <Empty emoji="🖼️" text="No samples yet" sub="Upload a photo above — you can share it with anyone" />
+                <Empty emoji="🖼️" text="No samples yet" sub="Upload a photo above — share with anyone via a link" />
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {samples.map(s => {
-                    const daysLeft = Math.max(0, Math.ceil((s.expires_at - Date.now() / 1000) / 86400))
+                <div className="space-y-8">
+                  {sortedDays.map(dateStr => {
+                    const daySamples = samplesByDay[dateStr]
+                    const folderId   = daySamples[0]?.folder_id
                     return (
-                      <div key={s.sample_id} className="bg-white rounded-xl border border-gray-200 overflow-hidden group relative">
-                        <img
-                          src={s.view_url}
-                          alt={s.file_name}
-                          className="w-full h-44 object-cover"
-                        />
-                        {/* Overlay actions */}
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                          <button
-                            onClick={() => copyLink(s.sample_id)}
-                            className="bg-white text-gray-800 text-xs font-medium px-3 py-1.5 rounded-full shadow hover:bg-gray-50 transition"
-                          >
-                            {copiedId === s.sample_id ? 'Copied!' : 'Copy link'}
-                          </button>
-                          <button
-                            onClick={() => handleDelete(s.sample_id)}
-                            className="bg-red-500 text-white text-xs font-medium px-3 py-1.5 rounded-full shadow hover:bg-red-600 transition"
-                          >
-                            Delete
-                          </button>
+                      <div key={dateStr}>
+                        {/* Day header */}
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-sm font-semibold text-gray-700">{formatDayLabel(dateStr)}</h3>
+                          {folderId && (
+                            <button
+                              onClick={() => copyFolderLink(folderId)}
+                              className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition ${copiedFolder === folderId ? 'bg-green-50 border-green-300 text-green-600' : 'border-gray-200 text-gray-500 hover:border-primary-300 hover:text-primary-600'}`}
+                            >
+                              {copiedFolder === folderId ? '✓ Copied!' : '📁 Copy folder link'}
+                            </button>
+                          )}
                         </div>
-                        <div className="px-3 py-2 flex items-center justify-between">
-                          <p className="text-xs text-gray-500 truncate max-w-[60%]">{s.file_name}</p>
-                          <p className="text-xs text-gray-400 shrink-0">
-                            {daysLeft > 0 ? `${daysLeft}d left` : 'Expiring'}
-                          </p>
+
+                        {/* Photo grid */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                          {daySamples.map(s => {
+                            const daysLeft = Math.max(0, Math.ceil((s.expires_at - Date.now() / 1000) / 86400))
+                            return (
+                              <div key={s.sample_id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                                {/* Image */}
+                                <div className="relative">
+                                  <img
+                                    src={s.view_url}
+                                    alt={s.file_name}
+                                    className="w-full aspect-square object-cover"
+                                  />
+                                  <span className="absolute top-1.5 left-1.5 bg-black/50 text-white text-[10px] font-medium rounded-full px-1.5 py-0.5">
+                                    {daysLeft}d left
+                                  </span>
+                                </div>
+                                {/* Always-visible action bar */}
+                                <div className="flex items-center gap-1 px-2 py-1.5">
+                                  <p className="flex-1 text-xs text-gray-500 truncate">{s.file_name}</p>
+                                  <button
+                                    onClick={() => copyPhotoLink(s.sample_id)}
+                                    title="Copy photo link"
+                                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition text-sm ${copiedId === s.sample_id ? 'bg-green-100 text-green-600' : 'hover:bg-gray-100 text-gray-400 hover:text-gray-600'}`}
+                                  >
+                                    {copiedId === s.sample_id ? '✓' : '🔗'}
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(s.sample_id)}
+                                    title="Delete"
+                                    className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-50 text-gray-400 hover:text-red-500 transition text-sm"
+                                  >
+                                    🗑️
+                                  </button>
+                                </div>
+                              </div>
+                            )
+                          })}
                         </div>
                       </div>
                     )
@@ -323,12 +372,7 @@ function Empty({ emoji, text, sub }) {
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
-    reader.onload = () => {
-      const result = reader.result
-      // Strip the data URL prefix (e.g. "data:image/jpeg;base64,")
-      const base64 = result.split(',')[1]
-      resolve(base64)
-    }
+    reader.onload  = () => resolve(reader.result.split(',')[1])
     reader.onerror = reject
     reader.readAsDataURL(file)
   })

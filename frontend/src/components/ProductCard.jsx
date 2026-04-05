@@ -72,21 +72,21 @@ export default function ProductCard({ product, onBookmark }) {
           {platform.label}
         </span>
 
-        {/* Action buttons */}
-        <div className="absolute top-2 right-2 flex flex-col gap-1.5">
+        {/* Action buttons — w-10 h-10 (40px) meets touch target minimums */}
+        <div className="absolute top-1.5 right-1.5 flex flex-col gap-1.5">
           <button
             onClick={handleBookmark}
             disabled={saving}
-            className={`w-7 h-7 rounded-full flex items-center justify-center shadow transition
-              ${bookmarked ? 'bg-red-500 text-white' : 'bg-white/80 hover:bg-white text-gray-600'}`}
+            className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md transition
+              ${bookmarked ? 'bg-red-500 text-white' : 'bg-white/90 hover:bg-white text-gray-600'}`}
           >
             {bookmarked ? '♥' : '♡'}
           </button>
           <button
             onClick={handleShare}
             title={copied ? 'Link copied!' : 'Share'}
-            className={`w-7 h-7 rounded-full flex items-center justify-center shadow transition text-xs
-              ${copied ? 'bg-green-500 text-white' : 'bg-white/80 hover:bg-white text-gray-600'}`}
+            className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md transition text-xs
+              ${copied ? 'bg-green-500 text-white' : 'bg-white/90 hover:bg-white text-gray-600'}`}
           >
             {copied ? '✓' : '↗'}
           </button>
@@ -121,7 +121,7 @@ export default function ProductCard({ product, onBookmark }) {
           href={product.product_url}
           target="_blank"
           rel="noopener noreferrer"
-          className={`block w-full text-center text-sm font-medium py-1.5 rounded-lg text-white transition ${platform.bg} hover:opacity-90`}
+          className={`block w-full text-center text-sm font-medium py-2.5 rounded-lg text-white transition ${platform.bg} hover:opacity-90`}
         >
           View on {platform.label}
         </a>

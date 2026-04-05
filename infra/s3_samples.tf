@@ -20,6 +20,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "samples" {
     id     = "auto-delete-after-5-days"
     status = "Enabled"
 
+    filter {}
+
     expiration {
       days = 5
     }

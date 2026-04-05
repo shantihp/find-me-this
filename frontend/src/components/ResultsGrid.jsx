@@ -18,9 +18,9 @@ export default function ResultsGrid({ products }) {
     if (filters.minPrice != null) out = out.filter(p => p.price >= filters.minPrice)
     if (filters.maxPrice != null) out = out.filter(p => p.price <= filters.maxPrice)
     out.sort((a, b) => {
-      if (filters.sortBy === 'price_asc') return a.price - b.price
+      if (filters.sortBy === 'price_asc')  return a.price - b.price
       if (filters.sortBy === 'price_desc') return b.price - a.price
-      if (filters.sortBy === 'discount') return (b.discount_percent || 0) - (a.discount_percent || 0)
+      if (filters.sortBy === 'discount')   return (b.discount_percent || 0) - (a.discount_percent || 0)
       return 0
     })
     return out
@@ -33,28 +33,50 @@ export default function ResultsGrid({ products }) {
         <p className="text-sm text-gray-600">{filtered.length} results</p>
         <button
           onClick={() => setShowFilters(true)}
-          className="text-sm font-medium text-primary-600 border border-primary-300 rounded-full px-3 py-1"
+          className="flex items-center gap-1.5 text-sm font-medium text-primary-600 border border-primary-300 rounded-full px-3 py-1.5"
         >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path d="M3 6h18M7 12h10M11 18h2" strokeLinecap="round" />
+          </svg>
           Filters & Sort
         </button>
       </div>
 
-      {/* Mobile filter drawer */}
+      {/* Mobile filter bottom sheet */}
       {showFilters && (
         <>
+          {/* Backdrop */}
           <div
-            className="fixed inset-0 z-20 bg-black/25 lg:hidden"
+            className="fixed inset-0 z-20 bg-black/30 lg:hidden"
             onClick={() => setShowFilters(false)}
           />
-          <div className="fixed top-0 left-0 h-full w-60 bg-white z-30 shadow-xl p-5 overflow-y-auto lg:hidden">
-            <div className="flex items-center justify-between mb-5">
+          {/* Sheet */}
+          <div
+            className="fixed bottom-0 inset-x-0 z-30 bg-white rounded-t-2xl shadow-2xl max-h-[80vh] overflow-y-auto lg:hidden"
+            style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+          >
+            {/* Drag handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 bg-gray-300 rounded-full" />
+            </div>
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
               <h2 className="font-semibold text-gray-800">Filters & Sort</h2>
               <button
                 onClick={() => setShowFilters(false)}
-                className="text-gray-400 hover:text-gray-600 text-lg leading-none"
+                className="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center"
               >✕</button>
             </div>
-            <FilterSidebar filters={filters} onChange={setFilters} total={filtered.length} />
+            {/* Content */}
+            <div className="px-5 py-4">
+              <FilterSidebar filters={filters} onChange={setFilters} total={filtered.length} />
+              <button
+                onClick={() => setShowFilters(false)}
+                className="w-full mt-5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl py-3 text-sm font-semibold transition"
+              >
+                Show {filtered.length} result{filtered.length !== 1 ? 's' : ''}
+              </button>
+            </div>
           </div>
         </>
       )}

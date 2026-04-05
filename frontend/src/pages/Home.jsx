@@ -70,18 +70,18 @@ export default function Home() {
   const showInput = status === 'idle' || isLoading
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
+    <div className="max-w-6xl mx-auto px-4 py-6 sm:py-10">
       {/* Hero */}
       {status === 'idle' && (
-        <div className="text-center mb-8">
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-3 tracking-tight">
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-3xl sm:text-5xl font-extrabold text-gray-900 mb-2 sm:mb-3 tracking-tight">
             Find <span className="text-primary-600">any item</span> across India's top shops
           </h1>
-          <p className="text-gray-500 text-lg max-w-xl mx-auto">
+          <p className="text-gray-500 text-base sm:text-lg max-w-xl mx-auto">
             Upload a photo or describe what you're looking for — we'll find it on Myntra, Amazon, Flipkart, Ajio, Nykaa, and Meesho.
           </p>
           {!user && remaining <= 3 && remaining > 0 && (
-            <p className="text-amber-600 text-sm mt-4 font-medium">
+            <p className="text-amber-600 text-sm mt-3 font-medium">
               {remaining} free search{remaining !== 1 ? 'es' : ''} remaining today.{' '}
               <button onClick={() => setShowLogin(true)} className="underline">Sign in for unlimited</button>
             </p>
@@ -91,19 +91,21 @@ export default function Home() {
 
       {/* Mode toggle */}
       {showInput && (
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center mb-5 sm:mb-6">
           <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
             <button
               onClick={() => switchMode('image')}
-              className={`px-5 py-2 rounded-lg text-sm font-medium transition ${mode === 'image' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`px-4 sm:px-5 py-2 rounded-lg text-sm font-medium transition ${mode === 'image' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
             >
-              📷 Search by image
+              <span className="sm:hidden">📷 Image</span>
+              <span className="hidden sm:inline">📷 Search by image</span>
             </button>
             <button
               onClick={() => switchMode('text')}
-              className={`px-5 py-2 rounded-lg text-sm font-medium transition ${mode === 'text' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`px-4 sm:px-5 py-2 rounded-lg text-sm font-medium transition ${mode === 'text' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
             >
-              ✏️ Describe what you want
+              <span className="sm:hidden">✏️ Describe</span>
+              <span className="hidden sm:inline">✏️ Describe what you want</span>
             </button>
           </div>
         </div>
@@ -168,20 +170,20 @@ export default function Home() {
 
       {/* Results */}
       {status === 'done' && results.length > 0 && (
-        <div className="mt-10">
-          <div className="flex items-center justify-between mb-6">
+        <div className="mt-8 sm:mt-10">
+          {/* Results header — stacks on mobile */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 mb-5 sm:mb-6">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900">
                 Results for "{identified?.search_query}"
               </h2>
               <p className="text-sm text-gray-500 mt-0.5">
-                {results.length} products found across {new Set(results.map(r => r.platform)).size} platforms
+                {results.length} products · {new Set(results.map(r => r.platform)).size} platforms
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 sm:shrink-0">
               <button
                 onClick={saveSearch}
-                title={savedSearch ? 'Search saved' : 'Save this search'}
                 className={`text-sm flex items-center gap-1.5 border rounded-full px-3 py-1.5 transition ${savedSearch ? 'text-amber-500 border-amber-300 bg-amber-50' : 'text-gray-500 border-gray-200 hover:border-amber-300 hover:text-amber-500'}`}
               >
                 {savedSearch ? '★ Saved' : '☆ Save search'}
@@ -191,7 +193,7 @@ export default function Home() {
           </div>
 
           {imagePreview && (
-            <div className="flex items-center gap-3 mb-6 p-3 bg-white border border-gray-200 rounded-xl w-fit">
+            <div className="flex items-center gap-3 mb-5 p-3 bg-white border border-gray-200 rounded-xl w-fit">
               <img src={imagePreview} alt="Searched item" className="w-12 h-12 object-cover rounded-lg" />
               <div>
                 <p className="text-xs text-gray-500 uppercase tracking-wide">Detected</p>

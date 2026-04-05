@@ -13,7 +13,8 @@ export default function Navbar({ onLoginClick, onLogoClick }) {
           <span>FindMeThis</span>
         </Link>
 
-        <div className="flex items-center gap-4">
+        {/* Desktop: full user section */}
+        <div className="hidden sm:flex items-center gap-4">
           {!user && <SearchCounter />}
           {user ? (
             <Link to="/profile" className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-primary-600">
@@ -34,6 +35,11 @@ export default function Navbar({ onLoginClick, onLogoClick }) {
               Sign in
             </button>
           )}
+        </div>
+
+        {/* Mobile: only show search counter if guest (sign in is in BottomNav) */}
+        <div className="flex sm:hidden items-center">
+          {!user && <SearchCounter />}
         </div>
       </div>
     </nav>
