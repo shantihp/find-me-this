@@ -11,6 +11,7 @@ class Product(BaseModel):
     product_url: str
     rating: Optional[float] = None
     in_stock: bool = True
+    source: str = "direct"   # "direct" | "serpapi"
 
 class IdentifyResponse(BaseModel):
     category: str       # fashion | beauty | footwear | accessories | unknown

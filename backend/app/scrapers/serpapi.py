@@ -99,6 +99,7 @@ class SerpApiScraper(BaseScraper):
                     product_url=link or f"https://www.google.com/search?q={query}",
                     rating=float(item["rating"]) if item.get("rating") else None,
                     in_stock=True,
+                    source="serpapi",
                 ))
             except Exception:
                 continue
