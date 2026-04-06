@@ -18,15 +18,21 @@ class AmazonScraper(BaseScraper):
         url = f"https://www.amazon.in/s"
         params = {"k": query, "ref": "sr_pg_1"}
         try:
-            async with httpx.AsyncClient(timeout=12, follow_redirects=True, headers=HEADERS) as client:
+            async with httpx.AsyncClient(timeout=10, follow_redirects=True, headers=HEADERS) as client:
                 resp = await client.get(url, params=params)
+                print(f"AMAZON status={resp.status_code} len={len(resp.text)}")
                 resp.raise_for_status()
                 soup = BeautifulSoup(resp.text, "html.parser")
-        except Exception:
+        except Exception as e:
+            print(f"AMAZON fetch error: {e}")
             return []
 
         products = []
         cards = soup.select('div[data-component-type="s-search-result"]')[:10]
+        print(f"AMAZON cards found: {len(cards)}")
+        if not cards:
+            # Amazon served a CAPTCHA or bot-check page
+            print(f"AMAZON page snippet: {soup.get_text()[:200]}")
         for card in cards:
             try:
                 name_el  = card.select_one("h2 span")

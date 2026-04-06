@@ -47,13 +47,8 @@ class MyntraScraper(BaseScraper):
             "plaEnabled": "false",
         }
         try:
-            async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
-                # Warm-up request to get cookies
-                await client.get("https://www.myntra.com/", headers={
-                    "User-Agent": _BROWSER_UA,
-                    "Accept": "text/html",
-                    "Accept-Language": "en-IN,en;q=0.9",
-                })
+            # No warm-up request — it just adds latency when the API is blocked
+            async with httpx.AsyncClient(timeout=8, follow_redirects=True) as client:
                 resp = await client.get(url, params=params, headers=_JSON_HEADERS)
                 print(f"MYNTRA API status={resp.status_code}")
                 if resp.status_code != 200:
@@ -97,8 +92,7 @@ class MyntraScraper(BaseScraper):
         slug = query.replace(" ", "-").lower()
         url = f"https://www.myntra.com/{slug}"
         try:
-            async with httpx.AsyncClient(timeout=12, follow_redirects=True, headers=_HTML_HEADERS) as client:
-                await client.get("https://www.myntra.com/", headers=_HTML_HEADERS)
+            async with httpx.AsyncClient(timeout=8, follow_redirects=True, headers=_HTML_HEADERS) as client:
                 resp = await client.get(url, headers=_HTML_HEADERS)
                 print(f"MYNTRA HTML status={resp.status_code} len={len(resp.text)}")
                 resp.raise_for_status()

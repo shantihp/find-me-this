@@ -50,6 +50,7 @@ class MeeshoScraper(BaseScraper):
                     image_url=img_url,
                     product_url=f"https://www.meesho.com/product/{pid}" if pid else "https://www.meesho.com",
                     in_stock=True,
+                    source="direct",
                 ))
             except Exception:
                 continue
