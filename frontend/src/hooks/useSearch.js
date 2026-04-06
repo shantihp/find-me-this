@@ -1,16 +1,18 @@
 import { useState } from 'react'
 import api from '../api/client'
 
+const EMPTY_RESULTS = { direct: [], google_shopping: [] }
+
 export function useSearch() {
   const [status, setStatus] = useState('idle') // idle | identifying | searching | done | error
   const [identified, setIdentified] = useState(null)
-  const [results, setResults] = useState([])
+  const [results, setResults] = useState(EMPTY_RESULTS)
   const [error, setError] = useState(null)
 
   async function run(imageBase64) {
     setStatus('identifying')
     setIdentified(null)
-    setResults([])
+    setResults(EMPTY_RESULTS)
     setError(null)
 
     try {
@@ -18,20 +20,24 @@ export function useSearch() {
       setIdentified(item)
       setStatus('searching')
 
-      const { data: products } = await api.post('/search', {
+      const { data } = await api.post('/search', {
         search_query: item.search_query,
         category: item.category,
       })
-      setResults(products)
+      const res = {
+        direct: data.direct || [],
+        google_shopping: data.google_shopping || [],
+      }
+      setResults(res)
       setStatus('done')
 
       api.post('/history', {
         detected_query: item.search_query,
         category: item.category,
-        result_count: products.length,
+        result_count: res.direct.length + res.google_shopping.length,
       }).catch(() => {})
 
-      return { item, products }
+      return { item, products: [...res.direct, ...res.google_shopping] }
     } catch (err) {
       if (err.response?.status === 429) {
         setStatus('idle')
@@ -46,22 +52,26 @@ export function useSearch() {
   async function runText(prompt) {
     setStatus('searching')
     setIdentified(null)
-    setResults([])
+    setResults(EMPTY_RESULTS)
     setError(null)
 
     try {
       const { data } = await api.post('/search/text', { prompt })
       setIdentified({ search_query: data.search_query, category: data.category })
-      setResults(data.products)
+      const res = {
+        direct: data.direct || [],
+        google_shopping: data.google_shopping || [],
+      }
+      setResults(res)
       setStatus('done')
 
       api.post('/history', {
         detected_query: data.search_query,
         category: data.category,
-        result_count: data.products.length,
+        result_count: res.direct.length + res.google_shopping.length,
       }).catch(() => {})
 
-      return { item: data, products: data.products }
+      return { item: data, products: [...res.direct, ...res.google_shopping] }
     } catch (err) {
       if (err.response?.status === 429) {
         setStatus('idle')
@@ -76,7 +86,7 @@ export function useSearch() {
   function reset() {
     setStatus('idle')
     setIdentified(null)
-    setResults([])
+    setResults(EMPTY_RESULTS)
     setError(null)
   }
 

@@ -20,37 +20,37 @@ function ProductGrid({ products }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
       {products.map((p, i) => (
-        <ProductCard key={`${p.platform}-${p.source}-${i}`} product={p} />
+        <ProductCard key={`${p.platform}-${i}`} product={p} />
       ))}
     </div>
   )
 }
 
-export default function ResultsGrid({ products }) {
+function applyFilters(list, filters) {
+  let out = [...list]
+  if (filters.platforms.length > 0) {
+    out = out.filter(p => filters.platforms.includes(
+      p.platform.charAt(0).toUpperCase() + p.platform.slice(1).toLowerCase()
+    ))
+  }
+  if (filters.minPrice != null) out = out.filter(p => p.price >= filters.minPrice)
+  if (filters.maxPrice != null) out = out.filter(p => p.price <= filters.maxPrice)
+  out.sort((a, b) => {
+    if (filters.sortBy === 'price_asc')  return a.price - b.price
+    if (filters.sortBy === 'price_desc') return b.price - a.price
+    if (filters.sortBy === 'discount')   return (b.discount_percent || 0) - (a.discount_percent || 0)
+    return 0
+  })
+  return out
+}
+
+export default function ResultsGrid({ direct = [], googleShopping = [] }) {
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
   const [showFilters, setShowFilters] = useState(false)
 
-  const filtered = useMemo(() => {
-    let out = [...products]
-    if (filters.platforms.length > 0) {
-      out = out.filter(p => filters.platforms.includes(
-        p.platform.charAt(0).toUpperCase() + p.platform.slice(1).toLowerCase()
-      ))
-    }
-    if (filters.minPrice != null) out = out.filter(p => p.price >= filters.minPrice)
-    if (filters.maxPrice != null) out = out.filter(p => p.price <= filters.maxPrice)
-    out.sort((a, b) => {
-      if (filters.sortBy === 'price_asc')  return a.price - b.price
-      if (filters.sortBy === 'price_desc') return b.price - a.price
-      if (filters.sortBy === 'discount')   return (b.discount_percent || 0) - (a.discount_percent || 0)
-      return 0
-    })
-    return out
-  }, [products, filters])
-
-  const directResults  = filtered.filter(p => p.source === 'direct')
-  const serpApiResults = filtered.filter(p => p.source !== 'direct')
-  const totalCount     = filtered.length
+  const filteredDirect  = useMemo(() => applyFilters(direct, filters), [direct, filters])
+  const filteredGoogle  = useMemo(() => applyFilters(googleShopping, filters), [googleShopping, filters])
+  const totalCount      = filteredDirect.length + filteredGoogle.length
 
   return (
     <div>
@@ -117,20 +117,20 @@ export default function ResultsGrid({ products }) {
           </div>
         ) : (
           <div className="flex-1 space-y-10">
-            {directResults.length > 0 && (
+            {filteredDirect.length > 0 && (
               <section>
                 <SectionHeading
                   title="Direct Results"
                   subtitle="Linked straight to the retailer"
-                  count={directResults.length}
+                  count={filteredDirect.length}
                 />
-                <ProductGrid products={directResults} />
+                <ProductGrid products={filteredDirect} />
               </section>
             )}
 
-            {serpApiResults.length > 0 && (
+            {filteredGoogle.length > 0 && (
               <section>
-                {directResults.length > 0 && (
+                {filteredDirect.length > 0 && (
                   <div className="flex items-center gap-3 mb-4">
                     <div className="flex-1 h-px bg-gray-200" />
                     <span className="text-xs text-gray-400 font-medium whitespace-nowrap">via Google Shopping</span>
@@ -140,9 +140,9 @@ export default function ResultsGrid({ products }) {
                 <SectionHeading
                   title="More Results"
                   subtitle="Sourced via Google Shopping"
-                  count={serpApiResults.length}
+                  count={filteredGoogle.length}
                 />
-                <ProductGrid products={serpApiResults} />
+                <ProductGrid products={filteredGoogle} />
               </section>
             )}
           </div>

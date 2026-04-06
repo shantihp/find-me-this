@@ -79,9 +79,10 @@ async def text_search(req: TextSearchRequest, request: Request):
     search_query = parsed.get("search_query") or req.prompt[:100]
     category = parsed.get("category", "unknown")
 
-    products = await run_search(search_query, category)
+    results = await run_search(search_query, category)
     return {
         "search_query": search_query,
         "category": category,
-        "products": products,
+        "direct": results["direct"],
+        "google_shopping": results["google_shopping"],
     }

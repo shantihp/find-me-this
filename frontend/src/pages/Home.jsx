@@ -187,7 +187,9 @@ export default function Home() {
       )}
 
       {/* Results */}
-      {status === 'done' && results.length > 0 && (
+      {status === 'done' && (results.direct.length > 0 || results.google_shopping.length > 0) && (() => {
+        const allResults = [...results.direct, ...results.google_shopping]
+        return (
         <div className="mt-8 sm:mt-10">
           {/* Results header — stacks on mobile */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 mb-5 sm:mb-6">
@@ -196,7 +198,7 @@ export default function Home() {
                 Results for "{identified?.search_query}"
               </h2>
               <p className="text-sm text-gray-500 mt-0.5">
-                {results.length} products · {new Set(results.map(r => r.platform)).size} platforms
+                {allResults.length} products · {new Set(allResults.map(r => r.platform)).size} platforms
               </p>
             </div>
             <div className="flex items-center gap-3 sm:shrink-0">
@@ -221,11 +223,12 @@ export default function Home() {
             </div>
           )}
 
-          <ResultsGrid products={results} />
+          <ResultsGrid direct={results.direct} googleShopping={results.google_shopping} />
         </div>
-      )}
+        )
+      })()}
 
-      {status === 'done' && results.length === 0 && (
+      {status === 'done' && results.direct.length === 0 && results.google_shopping.length === 0 && (
         <div className="text-center mt-12 text-gray-500">
           <p className="text-4xl mb-3">😕</p>
           <p className="font-medium text-gray-700">No results found</p>

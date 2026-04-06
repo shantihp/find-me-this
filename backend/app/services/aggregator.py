@@ -22,7 +22,8 @@ async def _safe_search(scraper, query: str, category: str, timeout: int) -> list
         return []
 
 
-async def run_search(query: str, category: str) -> list[dict]:
+async def run_search(query: str, category: str) -> dict:
+    """Return {"direct": [...], "google_shopping": [...]} — two pre-split lists."""
     direct_scrapers = [MyntraScraper(), FlipkartScraper(), AmazonScraper(), MeeshoScraper(), NykaaScraper()]
     serp_scrapers   = [SerpApiScraper()]
     all_scrapers    = direct_scrapers + serp_scrapers
@@ -33,27 +34,25 @@ async def run_search(query: str, category: str) -> list[dict]:
     )
     results = await asyncio.gather(*tasks)
 
-    # Pair each result list with its source label — determined by scraper identity,
-    # NOT by a field on the Product model (avoids Pydantic serialization surprises).
     direct_set = {type(s) for s in direct_scrapers}
-    all_items: list[tuple[Product, str]] = []
+    direct_items: list[dict] = []
+    serp_items:   list[dict] = []
+
+    seen: set[str] = set()
     for scraper, r in zip(all_scrapers, results):
-        source = "direct" if type(scraper) in direct_set else "serpapi"
+        is_direct = type(scraper) in direct_set
         print(f"SCRAPER [{scraper.platform}] returned {len(r)} results")
         for p in r:
-            all_items.append((p, source))
-
-    # Deduplicate by URL (direct scrapers come first so their version wins),
-    # filter zero-price, sort ascending, then inject source into the dict so it
-    # is always present in the JSON response regardless of the Pydantic schema.
-    seen: set[str] = set()
-    unique: list[dict] = []
-    for p, source in all_items:
-        if p.product_url not in seen and p.price > 0:
+            if p.product_url in seen or p.price <= 0:
+                continue
             seen.add(p.product_url)
             d = p.model_dump()
-            d["source"] = source   # always written at dict level — never missing
-            unique.append(d)
+            if is_direct:
+                direct_items.append(d)
+            else:
+                serp_items.append(d)
 
-    unique.sort(key=lambda d: d["price"])
-    return unique
+    direct_items.sort(key=lambda d: d["price"])
+    serp_items.sort(key=lambda d: d["price"])
+
+    return {"direct": direct_items, "google_shopping": serp_items}

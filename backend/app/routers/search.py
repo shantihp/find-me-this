@@ -26,5 +26,5 @@ async def search(req: SearchRequest, request: Request):
             }
         )
 
-    products = await run_search(req.search_query, req.category)
-    return products
+    results = await run_search(req.search_query, req.category)
+    return results   # {"direct": [...], "google_shopping": [...]}
