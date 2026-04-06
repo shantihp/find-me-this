@@ -60,7 +60,6 @@ class AmazonScraper(BaseScraper):
                     product_url=f"https://www.amazon.in/dp/{asin}" if asin else "https://www.amazon.in",
                     rating=float(rating_match.group(1)) if rating_match else None,
                     in_stock=True,
-                    source="direct",
                 ))
             except Exception:
                 continue

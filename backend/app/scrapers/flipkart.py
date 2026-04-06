@@ -109,7 +109,6 @@ class FlipkartScraper(BaseScraper):
                     image_url=img_el["src"] if img_el else None,
                     product_url=f"https://www.flipkart.com{href}" if href.startswith("/") else href or "https://www.flipkart.com",
                     in_stock=True,
-                    source="direct",
                 ))
             except Exception:
                 continue
@@ -170,7 +169,6 @@ class FlipkartScraper(BaseScraper):
                     image_url=img_el["src"] if img_el else None,
                     product_url=product_url,
                     in_stock=True,
-                    source="direct",
                 ))
                 if len(products) >= 12:
                     break

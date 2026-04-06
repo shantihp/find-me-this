@@ -38,7 +38,6 @@ class NykaaScraper(BaseScraper):
                     product_url=f"https://www.nykaa.com/p/{slug}" if slug else "https://www.nykaa.com",
                     rating=item.get("average_rating") or item.get("rating"),
                     in_stock=True,
-                    source="direct",
                 ))
             except Exception:
                 continue
