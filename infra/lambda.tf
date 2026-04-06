@@ -33,7 +33,7 @@ resource "null_resource" "lambda_build" {
         --target "${local.build_dir}" && \
       pip3 install \
         --quiet \
-        --platform linux_x86_64 \
+        --platform manylinux2014_x86_64 \
         --implementation cp \
         --python-version 3.12 \
         --only-binary=:all: \
