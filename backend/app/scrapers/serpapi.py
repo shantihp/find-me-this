@@ -17,12 +17,24 @@ PLATFORM_MAP = {
     "meesho": "meesho",
 }
 
-def _detect_platform(source: str, link: str) -> str:
+# Whitelist of Indian e-commerce domains — results from other domains are discarded
+INDIAN_ECOM_DOMAINS = {
+    "myntra.com", "amazon.in", "flipkart.com", "ajio.com",
+    "nykaa.com", "meesho.com", "nykaafashion.com", "snapdeal.com",
+    "tatacliq.com", "jiomart.com", "reliancedigital.in", "firstcry.com",
+    "limeroad.com", "shopclues.com", "pepperfry.com", "craftsvilla.com",
+}
+
+def _detect_platform(source: str, link: str) -> str | None:
+    """Return platform slug, or None if the site is not a known Indian e-com domain."""
     s = (source + link).lower()
     for key in PLATFORM_MAP:
         if key in s:
             return PLATFORM_MAP[key]
-    return source.lower().split(".")[0] if source else "other"
+    # Only include results from whitelisted Indian e-commerce sites
+    if any(domain in s for domain in INDIAN_ECOM_DOMAINS):
+        return source.lower().split(".")[0] if source else "other"
+    return None
 
 def _parse_price(raw: str) -> float:
     """Extract numeric price from strings like '₹1,299', 'INR 999', etc."""
@@ -73,6 +85,9 @@ class SerpApiScraper(BaseScraper):
                 source  = item.get("source", "")
                 link    = item.get("link", "") or item.get("product_link", "")
                 platform = _detect_platform(source, link)
+
+                if platform is None:
+                    continue  # Non-Indian site — skip
 
                 products.append(Product(
                     platform=platform,

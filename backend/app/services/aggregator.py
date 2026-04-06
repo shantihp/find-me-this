@@ -1,13 +1,16 @@
 import asyncio
 from app.models.product import Product
 from app.scrapers.amazon   import AmazonScraper
+from app.scrapers.myntra   import MyntraScraper
+from app.scrapers.flipkart import FlipkartScraper
 from app.scrapers.serpapi  import SerpApiScraper
 
 async def run_search(query: str, category: str) -> list[Product]:
-    # SerpAPI covers Myntra/Flipkart/Ajio/Nykaa/Meesho via Google Shopping —
-    # those sites block direct scraping from cloud IPs.
-    # Amazon uses its own API and is kept as a direct scraper.
-    scrapers = [SerpApiScraper(), AmazonScraper()]
+    # SerpAPI covers all Indian platforms via Google Shopping (India region).
+    # Myntra and Flipkart have direct integrations for richer/fresher results.
+    # Amazon is scraped directly from amazon.in.
+    # All non-Indian domains are filtered at the SerpAPI layer.
+    scrapers = [SerpApiScraper(), MyntraScraper(), FlipkartScraper(), AmazonScraper()]
     tasks = [s.search(query, category) for s in scrapers]
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -19,7 +22,7 @@ async def run_search(query: str, category: str) -> list[Product]:
             print(f"SCRAPER [{scraper.platform}] returned {len(r)} results")
             all_products.extend(r)
 
-    # Deduplicate by product_url, sort by price ascending
+    # Deduplicate by product_url, filter zero-price, sort by price ascending
     seen = set()
     unique = []
     for p in all_products:
