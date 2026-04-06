@@ -38,7 +38,7 @@ resource "null_resource" "lambda_build" {
         --python-version 3.12 \
         --only-binary=:all: \
         --upgrade \
-        pydantic pydantic-core \
+        "pydantic==2.8.2" "pydantic-core==2.20.1" \
         --target "${local.build_dir}"
       cp -r "${local.backend_dir}/app" "${local.build_dir}/app"
       cp "${local.backend_dir}/handler.py" "${local.build_dir}/handler.py"

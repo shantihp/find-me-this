@@ -46,7 +46,7 @@ async def run_search(query: str, category: str) -> dict:
             if p.product_url in seen or p.price <= 0:
                 continue
             seen.add(p.product_url)
-            d = p.model_dump()
+            d = p.model_dump() if hasattr(p, 'model_dump') else p.dict()
             if is_direct:
                 direct_items.append(d)
             else:
