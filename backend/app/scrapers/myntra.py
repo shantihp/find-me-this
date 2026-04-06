@@ -84,6 +84,7 @@ class MyntraScraper(BaseScraper):
                     product_url=f"https://www.myntra.com/{slug}" if slug else f"https://www.myntra.com/{pid}/buy",
                     rating=float(rating_raw) if rating_raw else None,
                     in_stock=True,
+                    source="direct",
                 ))
             except Exception:
                 continue
@@ -138,6 +139,7 @@ class MyntraScraper(BaseScraper):
                     product_url=f"https://www.myntra.com/{slug_url}" if slug_url else f"https://www.myntra.com/{pid_val}/buy",
                     rating=float(rating.group(1)) if rating else None,
                     in_stock=True,
+                    source="direct",
                 ))
             except Exception:
                 continue

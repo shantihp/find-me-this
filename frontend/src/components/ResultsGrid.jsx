@@ -48,8 +48,8 @@ export default function ResultsGrid({ products }) {
     return out
   }, [products, filters])
 
-  const directResults  = filtered.filter(p => p.source !== 'serpapi')
-  const serpApiResults = filtered.filter(p => p.source === 'serpapi')
+  const directResults  = filtered.filter(p => p.source === 'direct')
+  const serpApiResults = filtered.filter(p => p.source !== 'direct')
   const totalCount     = filtered.length
 
   return (

@@ -10,7 +10,9 @@ async def run_search(query: str, category: str) -> list[Product]:
     # Myntra and Flipkart have direct integrations for richer/fresher results.
     # Amazon is scraped directly from amazon.in.
     # All non-Indian domains are filtered at the SerpAPI layer.
-    scrapers = [SerpApiScraper(), MyntraScraper(), FlipkartScraper(), AmazonScraper()]
+    # Direct scrapers first — their source="direct" tag wins deduplication
+    # when the same URL also appears in SerpAPI results.
+    scrapers = [MyntraScraper(), FlipkartScraper(), AmazonScraper(), SerpApiScraper()]
     tasks = [s.search(query, category) for s in scrapers]
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
