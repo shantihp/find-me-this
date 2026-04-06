@@ -24,10 +24,10 @@ export function useSearch() {
         search_query: item.search_query,
         category: item.category,
       })
-      const res = {
-        direct: data.direct || [],
-        google_shopping: data.google_shopping || [],
-      }
+      // Handle both old (flat list) and new (split object) API response formats
+      const res = Array.isArray(data)
+        ? { direct: [], google_shopping: data }
+        : { direct: data.direct || [], google_shopping: data.google_shopping || [] }
       setResults(res)
       setStatus('done')
 
@@ -58,10 +58,10 @@ export function useSearch() {
     try {
       const { data } = await api.post('/search/text', { prompt })
       setIdentified({ search_query: data.search_query, category: data.category })
-      const res = {
-        direct: data.direct || [],
-        google_shopping: data.google_shopping || [],
-      }
+      // Handle both old (products key) and new (direct/google_shopping keys) response
+      const res = data.products
+        ? { direct: [], google_shopping: Array.isArray(data.products) ? data.products : [] }
+        : { direct: data.direct || [], google_shopping: data.google_shopping || [] }
       setResults(res)
       setStatus('done')
 
